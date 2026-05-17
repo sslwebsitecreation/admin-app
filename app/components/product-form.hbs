@@ -41,13 +41,14 @@
                   <input
                     type="color"
                     value={{if img.color img.color "#000000"}}
-                    {{on "input" (fn this.handleColorChange index target.value)}}
-                    class="w-10 h-10 rounded border cursor-pointer"
+                    {{on "input" (fn this.handleColorChange index)}}
+                    class="w-10 h-10 rounded border border-gray-300 cursor-pointer p-0"
+                    style="appearance: none; -webkit-appearance: none; background: transparent;"
                   />
                   <input
                     type="text"
                     value={{img.color}}
-                    {{on "input" (fn this.handleColorChange index target.value)}}
+                    {{on "input" (fn this.handleColorChange index)}}
                     class="form-input w-24"
                     placeholder="#000000"
                   />
@@ -88,8 +89,7 @@
       <input
         type="text"
         value={{this.name}}
-        {{on "input" (fn (mut this.name) target.value)}}
-        {{on "input" this.saveDraftOnInput}}
+        {{on "input" this.updateName}}
         class="form-input"
         required
       />
@@ -100,8 +100,7 @@
       <input
         type="text"
         value={{this.category}}
-        {{on "input" (fn (mut this.category) target.value)}}
-        {{on "input" this.saveDraftOnInput}}
+        {{on "input" this.updateCategory}}
         class="form-input"
         placeholder="e.g., Silk, Cotton, Designer"
         required
@@ -114,8 +113,7 @@
         <input
           type="number"
           value={{this.originalPrice}}
-          {{on "input" (fn (mut this.originalPrice) target.value)}}
-          {{on "input" this.saveDraftOnInput}}
+          {{on "input" this.updateOriginalPrice}}
           class="form-input"
           min="0"
           step="0.01"
@@ -127,8 +125,7 @@
         <input
           type="number"
           value={{this.stockCount}}
-          {{on "input" (fn (mut this.stockCount) target.value)}}
-          {{on "input" this.saveDraftOnInput}}
+          {{on "input" this.updateStockCount}}
           class="form-input"
           min="0"
           required
@@ -140,8 +137,7 @@
       <label class="form-label">Description</label>
       <textarea
         value={{this.description}}
-        {{on "input" (fn (mut this.description) target.value)}}
-        {{on "input" this.saveDraftOnInput}}
+        {{on "input" this.updateDescription}}
         class="form-input"
         rows="3"
       ></textarea>

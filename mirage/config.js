@@ -1,5 +1,3 @@
-import { createServer } from 'ember-cli-mirage';
-
 let products = [
   {
     id: 1,
@@ -97,74 +95,99 @@ let nextVideoId = 4;
 let nextImageId = 8;
 
 export default function() {
-  let server = createServer();
+  this.namespace = '/api/v1';
+  this.timing = 300;
 
-  server.namespace = '/api/v1';
-  server.timing = 300;
-
-  server.get('/all', () => ({
+  this.get('/all', () => ({
     products,
     youtube_videos: youtubeVideos
   }));
 
-  server.post('/products', (schema, request) => {
+  this.post('/products', (schema, request) => {
     const attrs = JSON.parse(request.requestBody);
     const newProduct = {
       id: nextProductId++,
       ...attrs,
-      images: attrs.images.map((img, idx) => ({
+      images: attrs.images?.map((img) => ({
         id: nextImageId++,
         color: img.color,
         key: img.image_link
-      })),
+      })) || [],
       created_at: new Date().toISOString()
     };
     products.push(newProduct);
-    return { products, youtube_videos: youtubeVideos };
+    return {
+      success: true,
+      data: {
+        success: true,
+        product_id: newProduct.id
+      }
+    };
   });
 
-  server.put('/products', (schema, request) => {
+  this.put('/products', (schema, request) => {
     const attrs = JSON.parse(request.requestBody);
     const index = products.findIndex(p => p.id === attrs.id);
     if (index !== -1) {
       products[index] = {
         ...products[index],
         ...attrs,
-        images: attrs.images.map((img, idx) => ({
-          id: products[index].images[idx]?.id || nextImageId++,
+        images: attrs.images?.map((img, idx) => ({
+          id: products[index].images?.[idx]?.id || nextImageId++,
           color: img.color,
           key: img.image_link
-        }))
+        })) || []
       };
     }
-    return { products, youtube_videos: youtubeVideos };
-  });
-
-  server.delete('/products', (schema, request) => {
-    const { id } = JSON.parse(request.requestBody);
-    products = products.filter(p => p.id !== id);
-    return { products, youtube_videos: youtubeVideos };
-  });
-
-  server.post('/upload-image', (schema, request) => {
-    const filename = `${crypto.randomUUID()}.webp`;
-    const key = `images/sarees/${filename}`;
     return {
-      key,
-      url: `https://cdn.example.com/${key}`
+      success: true,
+      data: {
+        success: true,
+        updated_id: attrs.id
+      }
     };
   });
 
-  server.delete('/delete-image', () => ({
-    success: true
-  }));
+  this.delete('/products', (schema, request) => {
+    const { id } = JSON.parse(request.requestBody);
+    products = products.filter(p => p.id !== id);
+    return {
+      success: true,
+      data: {
+        success: true,
+        deleted_id: id
+      }
+    };
+  });
 
-  server.post('/rebuild-cache', () => ({
+this.post('/upload-image', (schema, request) => {
+    const filename = `${crypto.randomUUID()}.webp`;
+    const key = `images/sarees/${filename}`;
+    return {
+      success: true,
+      data: {
+        key,
+        url: `https://cdn.example.com/${key}`
+      }
+    };
+  });
+
+  this.delete('/delete-image', (schema, request) => {
+    const { key } = JSON.parse(request.requestBody);
+    return {
+      success: true,
+      data: {
+        success: true
+      }
+    };
+  });
+
+  this.post('/rebuild-cache', () => ({
     success: true,
     message: 'Cache rebuilt successfully'
   }));
 
-  server.post('/youtube', (schema, request) => {
+  this.post('/youtube', (schema, request) => {
     const attrs = JSON.parse(request.requestBody);
     const newVideo = {
       id: nextVideoId++,
@@ -172,12 +195,24 @@ export default function() {
       created_at: new Date().toISOString()
     };
     youtubeVideos.push(newVideo);
-    return { products, youtube_videos: youtubeVideos };
+    return {
+      success: true,
+      data: {
+        success: true,
+        video_id: newVideo.id
+      }
+    };
   });
 
-  server.delete('/youtube', (schema, request) => {
+  this.delete('/youtube', (schema, request) => {
     const { id } = JSON.parse(request.requestBody);
     youtubeVideos = youtubeVideos.filter(v => v.id !== id);
-    return { products, youtube_videos: youtubeVideos };
+    return {
+      success: true,
+      data: {
+        success: true,
+        deleted_id: id
+      }
+    };
   });
 }

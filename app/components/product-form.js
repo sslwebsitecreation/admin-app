@@ -154,10 +154,41 @@ export default class ProductFormComponent extends Component {
   }
 
   @action
-  handleColorChange(index, color) {
+  handleColorChange(index, event) {
+    const color = event.target.value;
     const newImages = [...this.images];
     newImages[index] = { ...newImages[index], color };
     this.images = newImages;
+  }
+
+  @action
+  updateName(event) {
+    this.name = event.target.value;
+    this.saveDraft();
+  }
+
+  @action
+  updateCategory(event) {
+    this.category = event.target.value;
+    this.saveDraft();
+  }
+
+  @action
+  updateOriginalPrice(event) {
+    this.originalPrice = event.target.value;
+    this.saveDraft();
+  }
+
+  @action
+  updateStockCount(event) {
+    this.stockCount = event.target.value;
+    this.saveDraft();
+  }
+
+  @action
+  updateDescription(event) {
+    this.description = event.target.value;
+    this.saveDraft();
   }
 
   @action

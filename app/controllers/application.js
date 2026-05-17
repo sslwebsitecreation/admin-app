@@ -20,7 +20,7 @@ export default Controller.extend({
 
   async loadProducts() {
     try {
-      const res = await fetch('/api/v1/products');
+      const res = await fetch('/api/v1/all');
       const data = await res.json();
       this.set('output', JSON.stringify(data, null, 2));
     } catch (err) {

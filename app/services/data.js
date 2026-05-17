@@ -78,7 +78,9 @@ export default class DataService extends Service {
     this.error = null;
 
     try {
-      await fetch('/api/v1/rebuild-cache', { method: 'POST' });
+      try {
+        await fetch('/api/v1/rebuild-cache', { method: 'POST' });
+      } catch (e) {}
       
       const response = await fetch('/api/v1/all');
       const data = await response.json();

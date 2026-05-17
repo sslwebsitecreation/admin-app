@@ -3,6 +3,14 @@ import { inject as service } from '@ember/service';
 import { action } from '@ember/object';
 import { tracked } from '@glimmer/tracking';
 
+const IMAGE_MAX_SIZE_KEY = 'image-max-size-kb';
+const DEFAULT_MAX_SIZE_KB = 300;
+
+function getMaxSizeKB() {
+  const stored = localStorage.getItem(IMAGE_MAX_SIZE_KEY);
+  return stored ? parseInt(stored, 10) : DEFAULT_MAX_SIZE_KB;
+}
+
 export default class UtilitiesImageConverterController extends Controller {
   @service imageProcessor;
   @service router;
@@ -16,12 +24,21 @@ export default class UtilitiesImageConverterController extends Controller {
   @tracked quality = 90;
   @tracked width = 1200;
   @tracked height = 1600;
-  @tracked maxSizeKB = 400;
-  @tracked targetSizeKB = 400;
+  @tracked maxSizeKB = getMaxSizeKB();
+  @tracked targetSizeKB = 200;
   @tracked fileInfo = null;
   @tracked convertedSize = null;
   @tracked showExactPreview = false;
+  @tracked showOriginalFull = false;
   @tracked downloadFileName = '';
+
+  @action
+  handleMaxSizeChange(event) {
+    const value = parseInt(event.target.value) || DEFAULT_MAX_SIZE_KB;
+    const clamped = Math.min(Math.max(value, 100), 400);
+    this.maxSizeKB = clamped;
+    localStorage.setItem(IMAGE_MAX_SIZE_KEY, clamped.toString());
+  }
 
   @action
   async handleFileSelect(event) {
@@ -70,12 +87,16 @@ export default class UtilitiesImageConverterController extends Controller {
       const result = await this.imageProcessor.processImage(this.selectedFile, {
         width: this.width,
         height: this.height,
-        quality: this.quality / 100
+        quality: this.quality / 100,
+        targetSizeKB: this.targetSizeKB
       });
 
       this.convertedBlob = result.blob;
       this.convertedPreview = URL.createObjectURL(result.blob);
       this.convertedSize = (result.blob.size / 1024).toFixed(1) + ' KB';
+      
+      const originalName = this.selectedFile?.name?.replace(/\.[^/.]+$/, '') || 'image';
+      this.downloadFileName = `${originalName}_${this.width}x${this.height}.webp`;
     } catch (err) {
       this.error = err.message;
     } finally {
@@ -103,7 +124,14 @@ export default class UtilitiesImageConverterController extends Controller {
 
   @action
   handleTargetSizeChange(event) {
-    this.targetSizeKB = parseInt(event.target.value) || 400;
+    const value = parseInt(event.target.value) || 200;
+    if (value > this.maxSizeKB) {
+      this.error = `Target size cannot exceed ${this.maxSizeKB} KB`;
+      this.targetSizeKB = this.maxSizeKB;
+    } else {
+      this.targetSizeKB = value;
+      this.error = null;
+    }
   }
 
   @action
@@ -112,8 +140,7 @@ export default class UtilitiesImageConverterController extends Controller {
 
     const link = document.createElement('a');
     link.href = this.convertedPreview;
-    const originalName = this.selectedFile?.name?.replace(/\.[^/.]+$/, '') || 'image';
-    link.download = `${originalName}_${this.width}x${this.height}.webp`;
+    link.download = this.downloadFileName || 'image.webp';
     link.click();
   }
 
@@ -137,6 +164,25 @@ export default class UtilitiesImageConverterController extends Controller {
   @action
   handleCloseExactPreview() {
     this.showExactPreview = false;
+  }
+
+  @action
+  handleFileNameChange(event) {
+    let name = event.target.value;
+    if (!name.endsWith('.webp')) {
+      name = name + '.webp';
+    }
+    this.downloadFileName = name;
+  }
+
+  @action
+  handleViewOriginalFull() {
+    this.showOriginalFull = true;
+  }
+
+  @action
+  handleCloseOriginalFull() {
+    this.showOriginalFull = false;
   }
 
   willDestroy() {
