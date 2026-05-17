@@ -83,6 +83,11 @@ export default class YoutubeFormComponent extends Component {
   }
 
   @action
+  goBack() {
+    this.router.history.back();
+  }
+
+  @action
   async handleSubmit(event) {
     event.preventDefault();
 

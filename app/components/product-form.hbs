@@ -8,80 +8,97 @@
   {{/if}}
 
   <form {{on "submit" this.handleSubmit}} class="space-y-4">
-<div>
+    <div>
       <label class="form-label">Product Images (1200x1600)</label>
       
-      <table class="min-w-full divide-y divide-gray-200 mb-4">
-        <thead class="bg-gray-50">
-          <tr>
-            <th class="table-header">#</th>
-            <th class="table-header">Image</th>
-            <th class="table-header">Color</th>
-            <th class="table-header">Action</th>
-          </tr>
-        </thead>
-        <tbody class="bg-white divide-y divide-gray-200">
-          {{#each this.images as |img index|}}
-            <tr>
-              <td class="table-cell">{{inc index}}</td>
-              <td class="table-cell">
-                {{#if img.preview}}
-                  <img 
-                    src={{image-url img.preview}} 
-                    alt="Preview" 
-                    class="w-20 h-24 object-cover rounded cursor-zoom-in"
-                    {{on "click" (fn this.openPreview (image-url img.preview))}}
-                  />
+      <div class="space-y-3 mb-4">
+        {{#each this.images as |img index|}}
+          <div class="flex items-center gap-4 p-3 border border-gray-200 rounded-lg bg-gray-50">
+            <div class="w-20 h-24 flex-shrink-0 rounded overflow-hidden border border-gray-300">
+              {{#if img.preview}}
+                <img 
+                  src={{img.preview}} 
+                  alt="Preview" 
+                  class="w-full h-full object-contain bg-white cursor-zoom-in"
+                  {{on "click" (fn this.openPreview img.preview)}}
+                />
+              {{else}}
+                <div class="w-full h-full flex items-center justify-center text-gray-400 text-xs bg-gray-100">No Img</div>
+              {{/if}}
+            </div>
+            
+            <div class="flex-1 min-w-0">
+              <div class="text-xs text-gray-500 mb-1">
+                {{#if img.status}}
+                  {{#if (eq img.status "uploading")}}
+                    <span class="text-yellow-600">Uploading...</span>
+                  {{else if (eq img.status "uploaded")}}
+                    <span class="text-green-600">Uploaded</span>
+                  {{else if (eq img.status "failed")}}
+                    <span class="text-red-600">Failed: {{img.error}}</span>
+                  {{/if}}
                 {{else}}
-                  <span class="text-gray-400">Uploading...</span>
+                  <span class="text-gray-400">Pending</span>
                 {{/if}}
-              </td>
-              <td class="table-cell">
-                <div class="flex items-center gap-2">
-                  <input
-                    type="color"
-                    value={{if img.color img.color "#000000"}}
-                    {{on "input" (fn this.handleColorChange index)}}
-                    class="w-10 h-10 rounded border border-gray-300 cursor-pointer p-0"
-                    style="appearance: none; -webkit-appearance: none; background: transparent;"
-                  />
-                  <input
-                    type="text"
-                    value={{img.color}}
-                    {{on "input" (fn this.handleColorChange index)}}
-                    class="form-input w-24"
-                    placeholder="#000000"
-                  />
-                </div>
-              </td>
-              <td class="table-cell">
-                <button
-                  type="button"
-                  {{on "click" (fn this.handleRemoveImage index)}}
-                  class="btn-danger text-sm"
-                >
-                  Remove
-                </button>
-              </td>
-            </tr>
-          {{/each}}
-          <tr>
-            <td class="table-cell">{{add this.images.length 1}}</td>
-            <td class="table-cell" colspan="4">
-              <input
-                type="file"
-                accept="image/*"
-                {{on "change" this.handleAddImage}}
-                class="block w-full text-sm text-gray-500 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700"
+              </div>
+              {{#if img.key}}
+                <div class="text-xs text-gray-600 break-all">Key: {{img.key}}</div>
+              {{/if}}
+            </div>
+            
+            <div class="flex items-center gap-2">
+              <div class="relative">
+                <input 
+                  type="color" 
+                  value={{if img.color img.color "#000000"}}
+                  {{on "input" (fn this.handleColorChange index)}}
+                  class="w-10 h-10 rounded cursor-pointer border-2 border-gray-400"
+                  style="padding: 0; appearance: none; -webkit-appearance: none;"
+                  title="Click to select color"
+                />
+                {{#if img.color}}
+                  <div 
+                    class="absolute inset-0 rounded pointer-events-none border-2 border-gray-600"
+                    style="background-color: {{img.color}}; opacity: 0.3;"
+                  ></div>
+                {{/if}}
+              </div>
+              <input 
+                type="text" 
+                value={{img.color}}
+                {{on "input" (fn this.handleColorTextChange index)}}
+                class="form-input w-24"
+                placeholder="#000000"
               />
-            </td>
-          </tr>
-        </tbody>
-      </table>
+              {{#if img.color}}
+                <div 
+                  class="w-6 h-6 rounded border border-gray-400"
+                  style="background-color: {{img.color}};"
+                ></div>
+              {{/if}}
+            </div>
+            
+            <button
+              type="button"
+              {{on "click" (fn this.handleRemoveImage index)}}
+              class="btn-danger text-sm"
+            >
+              Remove
+            </button>
+          </div>
+        {{/each}}
+      </div>
       
-      {{#if this.isUploading}}
-        <p class="text-sm text-gray-500">Uploading image...</p>
-      {{/if}}
+      <label class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg cursor-pointer hover:bg-indigo-700">
+        <span>+ Add Image</span>
+        <input 
+          type="file" 
+          accept="image/*" 
+          multiple
+          {{on "change" this.handleAddImage}}
+          class="hidden"
+        />
+      </label>
     </div>
 
     <div>
@@ -144,7 +161,7 @@
     </div>
 
     <div class="flex justify-between pt-4">
-      <button type="button" {{on "click" this.router.history.back}} class="btn-secondary">
+      <button type="button" {{on "click" this.goBack}} class="btn-secondary">
         Cancel
       </button>
       <button

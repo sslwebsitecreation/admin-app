@@ -41,7 +41,6 @@ export default class ProductFormComponent extends Component {
     } else {
       this.loadDraft();
     }
-    window.addEventListener('beforeunload', this.handleBeforeUnload);
   }
 
   get hasUnsavedChanges() {
@@ -79,25 +78,8 @@ export default class ProductFormComponent extends Component {
     }
   }
 
-  clearDraft() {
+clearDraft() {
     localStorage.removeItem(STORAGE_KEY);
-  }
-
-  handleBeforeUnload = (event) => {
-    if (this.hasUnsavedChanges) {
-      this.saveDraft();
-      event.preventDefault();
-      event.returnValue = '';
-    }
-  }
-
-  willDestroy() {
-    super.willDestroy(...arguments);
-    window.removeEventListener('beforeunload', this.handleBeforeUnload);
-  }
-
-  get isValid() {
-    return this.name && this.category && this.originalPrice && this.stockCount && this.images.length > 0;
   }
 
   get isEdit() {
@@ -107,58 +89,6 @@ export default class ProductFormComponent extends Component {
   @action
   saveDraftOnInput() {
     this.saveDraft();
-  }
-
-  @action
-  openPreview(imageUrl) {
-    this.previewImage = imageUrl;
-  }
-
-  @action
-  closePreview() {
-    this.previewImage = null;
-  }
-
-  @action
-  async handleAddImage(event) {
-    const files = event.target.files;
-    if (!files || files.length === 0) return;
-
-    this.isUploading = true;
-    this.error = null;
-
-    try {
-      for (const file of files) {
-        const result = await this.api.uploadImage(file, 1200, 1600);
-
-        if (result.key) {
-          this.images = [
-            ...this.images,
-            {
-              color: '',
-              key: result.key,
-              url: result.url,
-              preview: URL.createObjectURL(file)
-            }
-          ];
-        } else {
-          this.error = 'Failed to upload image';
-        }
-      }
-    } catch (err) {
-      this.error = err.message || 'Upload failed';
-    } finally {
-      this.isUploading = false;
-      event.target.value = '';
-    }
-  }
-
-  @action
-  handleColorChange(index, event) {
-    const color = event.target.value;
-    const newImages = [...this.images];
-    newImages[index] = { ...newImages[index], color };
-    this.images = newImages;
   }
 
   @action
@@ -192,6 +122,101 @@ export default class ProductFormComponent extends Component {
   }
 
   @action
+  openPreview(imageUrl) {
+    this.previewImage = imageUrl;
+  }
+
+  @action
+  closePreview() {
+    this.previewImage = null;
+  }
+
+@action
+  async handleAddImage(event) {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    const fileArray = Array.from(files);
+    
+    for (let i = 0; i < fileArray.length; i++) {
+      const file = fileArray[i];
+      const tempId = Date.now() + Math.random();
+      const preview = URL.createObjectURL(file);
+      
+      const newImage = {
+        tempId,
+        color: '',
+        key: null,
+        url: null,
+        preview,
+        status: 'uploading'
+      };
+      
+      const currentImages = [...this.images, newImage];
+      this.images = currentImages;
+
+      await new Promise(resolve => setTimeout(resolve, 50));
+
+      try {
+        const result = await this.api.uploadImage(file, 1200, 1600);
+        
+        if (result.data?.key) {
+          this.images = this.images.map(img => 
+            img.tempId === tempId 
+              ? { ...img, key: result.data.key, url: result.data.url, status: 'uploaded' }
+              : img
+          );
+        } else {
+          this.images = this.images.map(img => 
+            img.tempId === tempId 
+              ? { ...img, status: 'failed', error: 'Upload failed' }
+              : img
+          );
+        }
+      } catch (err) {
+        console.error('Upload error:', err);
+        this.images = this.images.map(img => 
+          img.tempId === tempId 
+            ? { ...img, status: 'failed', error: err.message }
+            : img
+        );
+      }
+    }
+
+    event.target.value = '';
+  }
+
+  @action
+  handleColorChange(index, event) {
+    const color = event.target.value;
+    const newImages = [...this.images];
+    newImages[index] = { ...newImages[index], color };
+    this.images = newImages;
+  }
+
+  @action
+  handleColorTextChange(index, event) {
+    const color = event.target.value;
+    if (!color || /^#[0-9A-Fa-f]{6}$/.test(color)) {
+      const newImages = [...this.images];
+      newImages[index] = { ...newImages[index], color };
+      this.images = newImages;
+    }
+  }
+
+  parseColor(color) {
+    if (!color) return '#cccccc';
+    if (color.startsWith('#')) return color;
+    const colorMap = {
+      'Red': '#FF0000', 'Blue': '#0000FF', 'Green': '#008000', 'Yellow': '#FFFF00',
+      'White': '#FFFFFF', 'Black': '#000000', 'Pink': '#FFC0CB', 'Maroon': '#800000',
+      'Orange': '#FFA500', 'Purple': '#800080', 'Gold': '#FFD700', 'Silver': '#C0C0C0',
+      'Beige': '#F5F5DC', 'Grey': '#808080'
+    };
+    return colorMap[color] || color;
+  }
+
+  @action
   async handleRemoveImage(index) {
     const image = this.images[index];
     if (image.key) {
@@ -205,6 +230,11 @@ export default class ProductFormComponent extends Component {
       URL.revokeObjectURL(image.preview);
     }
     this.images = this.images.filter((_, i) => i !== index);
+  }
+
+  @action
+  goBack() {
+    this.router.history.back();
   }
 
   @action
@@ -235,9 +265,9 @@ export default class ProductFormComponent extends Component {
           stock_count: parseInt(this.stockCount),
           images: imagesPayload
         });
-        if (result.products) {
+        if (result.success && result.data?.success) {
           this.clearDraft();
-          this.router.transitionTo('products');
+          this.router.history.back();
         } else {
           this.error = result.message || 'Failed to update product';
         }
@@ -251,9 +281,9 @@ export default class ProductFormComponent extends Component {
           images: imagesPayload
         });
 
-        if (result.products) {
+        if (result.success && result.data?.success) {
           this.clearDraft();
-          this.router.transitionTo('products');
+          this.router.history.back();
         } else {
           this.error = result.message || 'Failed to create product';
         }
