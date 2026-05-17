@@ -1,5 +1,5 @@
 <div class="card max-w-2xl mx-auto">
-  <h2 class="text-2xl font-bold mb-6">{{if this.isEdit 'Edit' 'Add'}} Product</h2>
+  <h2 class="text-2xl font-bold mb-6">{{if this.isEdit "Edit" "Add"}} Product</h2>
 
   {{#if this.error}}
     <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
@@ -12,188 +12,74 @@
       <label class="form-label">Product Images (1200x1600)</label>
       
       <div class="space-y-3 mb-4">
-        {{#each this.images as |img index|}}
+        {{#each this.images as |img idx|}}
+          {{log img}}
           <div class="flex items-center gap-4 p-3 border border-gray-200 rounded-lg bg-gray-50">
-            <div class="w-20 h-24 flex-shrink-0 rounded overflow-hidden border border-gray-300">
+            <div class="w-20 h-24 flex-shrink-0 rounded overflow-hidden border border-gray-300 bg-white">
               {{#if img.preview}}
-                <img 
-                  src={{img.preview}} 
-                  alt="Preview" 
-                  class="w-full h-full object-contain bg-white cursor-zoom-in"
-                  {{on "click" (fn this.openPreview img.preview)}}
-                />
+                <img src={{img.preview}} alt="Preview" class="w-full h-full object-contain" />
               {{else}}
-                <div class="w-full h-full flex items-center justify-center text-gray-400 text-xs bg-gray-100">No Img</div>
+                <div class="w-full h-full flex items-center justify-center text-gray-400 text-xs">No Image</div>
               {{/if}}
             </div>
             
             <div class="flex-1 min-w-0">
-              <div class="text-xs text-gray-500 mb-1">
-                {{#if img.status}}
-                  {{#if (eq img.status "uploading")}}
-                    <span class="text-yellow-600">Uploading...</span>
-                  {{else if (eq img.status "uploaded")}}
-                    <span class="text-green-600">Uploaded</span>
-                  {{else if (eq img.status "failed")}}
-                    <span class="text-red-600">Failed: {{img.error}}</span>
-                  {{/if}}
-                {{else}}
-                  <span class="text-gray-400">Pending</span>
-                {{/if}}
-              </div>
+              <div class="text-xs text-gray-500 mb-1">{{img.status}}</div>
               {{#if img.key}}
-                <div class="text-xs text-gray-600 break-all">Key: {{img.key}}</div>
+                <div class="text-xs text-gray-600">Key: {{img.key}}</div>
               {{/if}}
             </div>
             
             <div class="flex items-center gap-2">
-              <div class="relative">
-                <input 
-                  type="color" 
-                  value={{if img.color img.color "#000000"}}
-                  {{on "input" (fn this.handleColorChange index)}}
-                  class="w-10 h-10 rounded cursor-pointer border-2 border-gray-400"
-                  style="padding: 0; appearance: none; -webkit-appearance: none;"
-                  title="Click to select color"
-                />
-                {{#if img.color}}
-                  <div 
-                    class="absolute inset-0 rounded pointer-events-none border-2 border-gray-600"
-                    style="background-color: {{img.color}}; opacity: 0.3;"
-                  ></div>
-                {{/if}}
-              </div>
-              <input 
-                type="text" 
-                value={{img.color}}
-                {{on "input" (fn this.handleColorTextChange index)}}
-                class="form-input w-24"
-                placeholder="#000000"
-              />
-              {{#if img.color}}
-                <div 
-                  class="w-6 h-6 rounded border border-gray-400"
-                  style="background-color: {{img.color}};"
-                ></div>
-              {{/if}}
+              <button type="button" {{on "click" this.chooseFile}} class="px-3 py-1 bg-gray-600 text-white text-sm rounded">Choose</button>
             </div>
             
-            <button
-              type="button"
-              {{on "click" (fn this.handleRemoveImage index)}}
-              class="btn-danger text-sm"
-            >
-              Remove
-            </button>
+            <div class="flex items-center gap-2">
+              <span class="text-xs text-gray-500">Color:</span>
+              <input type="text" value={{img.color}} data-color-index={{idx}} {{on "input" this.handleColorInput}} class="form-input w-20 color-input" placeholder="#000000" />
+            </div>
+            
+            <button type="button" data-remove-index={{idx}} {{on "click" this.removeImage}} class="text-red-600 text-sm">Remove</button>
           </div>
         {{/each}}
       </div>
       
-      <label class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg cursor-pointer hover:bg-indigo-700">
-        <span>+ Add Image</span>
-        <input 
-          type="file" 
-          accept="image/*" 
-          multiple
-          {{on "change" this.handleAddImage}}
-          class="hidden"
-        />
-      </label>
+      <button type="button" {{on "click" this.addImage}} class="px-4 py-2 bg-indigo-600 text-white rounded-lg">+ Add Image Row</button>
     </div>
 
     <div>
       <label class="form-label">Name *</label>
-      <input
-        type="text"
-        value={{this.name}}
-        {{on "input" this.updateName}}
-        class="form-input"
-        required
-      />
+      <input type="text" value={{this.name}} {{on "input" this.updateName}} class="form-input" required />
     </div>
 
     <div>
       <label class="form-label">Category *</label>
-      <input
-        type="text"
-        value={{this.category}}
-        {{on "input" this.updateCategory}}
-        class="form-input"
-        placeholder="e.g., Silk, Cotton, Designer"
-        required
-      />
+      <input type="text" value={{this.category}} {{on "input" this.updateCategory}} class="form-input" required />
     </div>
 
     <div class="grid grid-cols-2 gap-4">
       <div>
         <label class="form-label">Price *</label>
-        <input
-          type="number"
-          value={{this.originalPrice}}
-          {{on "input" this.updateOriginalPrice}}
-          class="form-input"
-          min="0"
-          step="0.01"
-          required
-        />
+        <input type="number" value={{this.originalPrice}} {{on "input" this.updatePrice}} class="form-input" required />
       </div>
       <div>
-        <label class="form-label">Stock Count *</label>
-        <input
-          type="number"
-          value={{this.stockCount}}
-          {{on "input" this.updateStockCount}}
-          class="form-input"
-          min="0"
-          required
-        />
+        <label class="form-label">Stock *</label>
+        <input type="number" value={{this.stockCount}} {{on "input" this.updateStock}} class="form-input" required />
       </div>
     </div>
 
     <div>
       <label class="form-label">Description</label>
-      <textarea
-        value={{this.description}}
-        {{on "input" this.updateDescription}}
-        class="form-input"
-        rows="3"
-      ></textarea>
+      <textarea value={{this.description}} {{on "input" this.updateDesc}} class="form-input" rows="3"></textarea>
     </div>
 
     <div class="flex justify-between pt-4">
-      <button type="button" {{on "click" this.goBack}} class="btn-secondary">
-        Cancel
-      </button>
-      <button
-        type="submit"
-        class="btn-primary"
-        disabled={{or this.isSaving (not this.isValid)}}
-      >
-        {{#if this.isSaving}}{{if this.isEdit 'Updating...' 'Creating...'}}{{else}}{{if this.isEdit 'Update' 'Create'}} Product{{/if}}
+      <button type="button" {{on "click" this.goBack}} class="btn-secondary">Cancel</button>
+      <button type="submit" class="btn-primary" disabled={{not this.isValid}}>
+        {{#if this.isSaving}}Saving...{{else}}{{if this.isEdit "Update" "Create"}} Product{{/if}}
       </button>
     </div>
   </form>
 
-  {{#if this.previewImage}}
-    <div 
-      class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50"
-      {{on "click" this.closePreview}}
-    >
-      <div class="relative max-w-full max-h-full p-4">
-        <button
-          type="button"
-          {{on "click" this.closePreview}}
-          class="absolute top-2 right-2 text-white text-3xl font-bold hover:text-gray-300 z-10 p-2"
-        >
-          &times;
-        </button>
-        <p class="text-white text-center text-sm mb-2">1200 x 1600</p>
-        <img 
-          src={{this.previewImage}} 
-          alt="Full preview" 
-          class="max-w-[1200px] max-h-[1600px] object-contain"
-        />
-      </div>
-    </div>
-  {{/if}}
+  <input type="file" accept="image/*" id="file-input" {{on "change" this.filePicked}} class="hidden" />
 </div>

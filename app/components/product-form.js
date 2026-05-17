@@ -3,8 +3,6 @@ import { inject as service } from '@ember/service';
 import { action } from '@ember/object';
 import { tracked } from '@glimmer/tracking';
 
-const STORAGE_KEY = 'admin_product_form_draft';
-
 export default class ProductFormComponent extends Component {
   @service api;
   @service router;
@@ -15,11 +13,9 @@ export default class ProductFormComponent extends Component {
   @tracked originalPrice = '';
   @tracked stockCount = '';
   @tracked images = [];
-
-  @tracked isUploading = false;
+  @tracked lastFile = null;
   @tracked isSaving = false;
   @tracked error = null;
-  @tracked previewImage = null;
 
   constructor() {
     super(...arguments);
@@ -29,278 +25,86 @@ export default class ProductFormComponent extends Component {
       this.category = this.args.product.category || '';
       this.originalPrice = this.args.product.original_price?.toString() || '';
       this.stockCount = this.args.product.stock_count?.toString() || '';
-      
       if (this.args.product.images) {
-        this.images = this.args.product.images.map(img => ({
-          color: img.color || '#000000',
-          key: img.key,
-          url: img.key,
-          preview: img.key
-        }));
+        this.images = this.args.product.images.map(img => ({ ...img, preview: img.key, status: 'uploaded' }));
       }
     } else {
-      this.loadDraft();
+      this.images = [{ color: '', key: null, file: null, preview: null, status: null }];
     }
   }
 
-  get hasUnsavedChanges() {
-    return this.name || this.description || this.category || this.originalPrice || this.stockCount || this.images.length > 0;
+  get isEdit() { return !!this.args.product; }
+
+  get isValid() {
+    if (!this.name || !this.category || !this.originalPrice || !this.stockCount) return false;
+    if (this.images.length === 0) return false;
+    return this.images.every(img => img.status === 'uploaded' && img.key && img.color);
   }
 
-  loadDraft() {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const data = JSON.parse(saved);
-        this.name = data.name || '';
-        this.description = data.description || '';
-        this.category = data.category || '';
-        this.originalPrice = data.originalPrice || '';
-        this.stockCount = data.stockCount || '';
-      }
-    } catch (e) {
-      console.error('Failed to load draft:', e);
-    }
+  @action updateName(e) { this.name = e.target.value; }
+  @action updateCategory(e) { this.category = e.target.value; }
+  @action updatePrice(e) { this.originalPrice = e.target.value; }
+  @action updateStock(e) { this.stockCount = e.target.value; }
+  @action updateDesc(e) { this.description = e.target.value; }
+
+  @action addImage() {
+    this.images = [...this.images, { color: '', key: null, file: null, preview: null, status: null }];
   }
 
-  saveDraft() {
-    try {
-      const data = {
-        name: this.name,
-        description: this.description,
-        category: this.category,
-        originalPrice: this.originalPrice,
-        stockCount: this.stockCount
-      };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    } catch (e) {
-      console.error('Failed to save draft:', e);
-    }
+  @action removeImage(e) {
+    const idx = parseInt(e.target.dataset.removeIndex, 10);
+    this.images = this.images.filter((_, i) => i !== idx);
   }
 
-clearDraft() {
-    localStorage.removeItem(STORAGE_KEY);
+  @action handleColorInput(e) {
+    const idx = parseInt(e.target.dataset.colorIndex, 10);
+    const color = e.target.value;
+    this.images = this.images.map((img, i) => i === idx ? { ...img, color } : img);
   }
 
-  get isEdit() {
-    return !!this.args.product;
+  @action chooseFile() {
+    document.getElementById('file-input').click();
   }
 
-  @action
-  saveDraftOnInput() {
-    this.saveDraft();
-  }
-
-  @action
-  updateName(event) {
-    this.name = event.target.value;
-    this.saveDraft();
-  }
-
-  @action
-  updateCategory(event) {
-    this.category = event.target.value;
-    this.saveDraft();
-  }
-
-  @action
-  updateOriginalPrice(event) {
-    this.originalPrice = event.target.value;
-    this.saveDraft();
-  }
-
-  @action
-  updateStockCount(event) {
-    this.stockCount = event.target.value;
-    this.saveDraft();
-  }
-
-  @action
-  updateDescription(event) {
-    this.description = event.target.value;
-    this.saveDraft();
-  }
-
-  @action
-  openPreview(imageUrl) {
-    this.previewImage = imageUrl;
-  }
-
-  @action
-  closePreview() {
-    this.previewImage = null;
-  }
-
-@action
-  async handleAddImage(event) {
-    const files = event.target.files;
-    if (!files || files.length === 0) return;
-
-    const fileArray = Array.from(files);
-    
-    for (let i = 0; i < fileArray.length; i++) {
-      const file = fileArray[i];
-      const tempId = Date.now() + Math.random();
-      const preview = URL.createObjectURL(file);
-      
-      const newImage = {
-        tempId,
-        color: '',
-        key: null,
-        url: null,
-        preview,
-        status: 'uploading'
-      };
-      
-      const currentImages = [...this.images, newImage];
-      this.images = currentImages;
-
-      await new Promise(resolve => setTimeout(resolve, 50));
-
-      try {
-        const result = await this.api.uploadImage(file, 1200, 1600);
-        
-        if (result.data?.key) {
-          this.images = this.images.map(img => 
-            img.tempId === tempId 
-              ? { ...img, key: result.data.key, url: result.data.url, status: 'uploaded' }
-              : img
-          );
-        } else {
-          this.images = this.images.map(img => 
-            img.tempId === tempId 
-              ? { ...img, status: 'failed', error: 'Upload failed' }
-              : img
-          );
-        }
-      } catch (err) {
-        console.error('Upload error:', err);
-        this.images = this.images.map(img => 
-          img.tempId === tempId 
-            ? { ...img, status: 'failed', error: err.message }
-            : img
-        );
-      }
-    }
-
-    event.target.value = '';
-  }
-
-  @action
-  handleColorChange(index, event) {
-    const color = event.target.value;
-    const newImages = [...this.images];
-    newImages[index] = { ...newImages[index], color };
-    this.images = newImages;
-  }
-
-  @action
-  handleColorTextChange(index, event) {
-    const color = event.target.value;
-    if (!color || /^#[0-9A-Fa-f]{6}$/.test(color)) {
-      const newImages = [...this.images];
-      newImages[index] = { ...newImages[index], color };
-      this.images = newImages;
-    }
-  }
-
-  parseColor(color) {
-    if (!color) return '#cccccc';
-    if (color.startsWith('#')) return color;
-    const colorMap = {
-      'Red': '#FF0000', 'Blue': '#0000FF', 'Green': '#008000', 'Yellow': '#FFFF00',
-      'White': '#FFFFFF', 'Black': '#000000', 'Pink': '#FFC0CB', 'Maroon': '#800000',
-      'Orange': '#FFA500', 'Purple': '#800080', 'Gold': '#FFD700', 'Silver': '#C0C0C0',
-      'Beige': '#F5F5DC', 'Grey': '#808080'
-    };
-    return colorMap[color] || color;
-  }
-
-  @action
-  async handleRemoveImage(index) {
-    const image = this.images[index];
-    if (image.key) {
-      try {
-        await this.api.deleteImage(image.key);
-      } catch (err) {
-        console.error('Failed to delete image:', err);
-      }
-    }
-    if (image.preview?.startsWith('blob:')) {
-      URL.revokeObjectURL(image.preview);
-    }
-    this.images = this.images.filter((_, i) => i !== index);
-  }
-
-  @action
-  goBack() {
-    this.router.history.back();
-  }
-
-  @action
-  async handleSubmit(event) {
-    event.preventDefault();
-
-    if (!this.isValid) {
-      this.error = 'Please fill all required fields and add at least one image';
-      return;
-    }
-
-    const imagesPayload = this.images.map(img => ({
-      color: img.color || '#000000',
-      image_link: img.key
-    }));
-
-    this.isSaving = true;
-    this.error = null;
+  @action async filePicked(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const preview = URL.createObjectURL(file);
+    const newImg = { color: '', key: null, preview, status: 'uploading' };
+    this.images = [...this.images, newImg];
+    this.lastFile = file;
+    e.target.value = '';
 
     try {
-      if (this.isEdit) {
-        const result = await this.api.updateProduct({
-          id: this.args.product.id,
-          name: this.name,
-          description: this.description,
-          category: this.category,
-          original_price: parseFloat(this.originalPrice),
-          stock_count: parseInt(this.stockCount),
-          images: imagesPayload
-        });
-        if (result.success && result.data?.success) {
-          this.clearDraft();
-          this.router.history.back();
-        } else {
-          this.error = result.message || 'Failed to update product';
-        }
-      } else {
-        const result = await this.api.createProduct({
-          name: this.name,
-          description: this.description,
-          category: this.category,
-          original_price: parseFloat(this.originalPrice),
-          stock_count: parseInt(this.stockCount),
-          images: imagesPayload
-        });
-
-        if (result.success && result.data?.success) {
-          this.clearDraft();
-          this.router.history.back();
-        } else {
-          this.error = result.message || 'Failed to create product';
-        }
-      }
+      const result = await this.api.uploadImage(file, 1200, 1600);
+      this.images = this.images.map((img, i) => 
+        i === this.images.length - 1 
+          ? { ...img, key: result.data?.key, status: result.data?.key ? 'uploaded' : 'failed' }
+          : img
+      );
     } catch (err) {
-      this.error = err.message || 'Failed to save product';
-    } finally {
-      this.isSaving = false;
+      this.images = this.images.map((img, i) => 
+        i === this.images.length - 1 
+          ? { ...img, status: 'failed' }
+          : img
+      );
     }
   }
 
-  willDestroy() {
-    super.willDestroy(...arguments);
-    this.images.forEach(img => {
-      if (img.preview?.startsWith('blob:')) {
-        URL.revokeObjectURL(img.preview);
-      }
-    });
+  @action goBack() { this.router.history.back(); }
+
+  @action async handleSubmit(e) {
+    e.preventDefault();
+    if (!this.isValid) { this.error = 'Complete all images first'; return; }
+    this.isSaving = true;
+    try {
+      const payload = { name: this.name, description: this.description, category: this.category, original_price: parseFloat(this.originalPrice), stock_count: parseInt(this.stockCount), images: this.images.map(i => ({ color: i.color, image_link: i.key })) };
+      const result = this.isEdit ? await this.api.updateProduct({ ...payload, id: this.args.product.id }) : await this.api.createProduct(payload);
+      if (result.success && result.data?.success) this.router.history.back();
+      else this.error = result.message || 'Failed';
+    } catch (err) { 
+      this.error = err.message; 
+    }
+    this.isSaving = false;
   }
 }
