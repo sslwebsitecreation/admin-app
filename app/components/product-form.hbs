@@ -1,0 +1,133 @@
+<div class="card max-w-2xl mx-auto">
+  <h2 class="text-2xl font-bold mb-6">{{if this.isEdit 'Edit' 'Add'}} Product</h2>
+
+  {{#if this.error}}
+    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+      {{this.error}}
+    </div>
+  {{/if}}
+
+  <form {{on "submit" this.handleSubmit}} class="space-y-4">
+    <div>
+      <label class="form-label">Product Images (1200x1600)</label>
+      <div class="mt-1">
+        <input
+          type="file"
+          accept="image/*"
+          {{on "change" this.handleAddImage}}
+          class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+        />
+        {{#if this.isUploading}}
+          <p class="text-sm text-gray-500 mt-1">Uploading...</p>
+        {{/if}}
+      </div>
+
+      {{#if this.images}}
+        <div class="mt-4 grid grid-cols-2 gap-4">
+          {{#each this.images as |img index|}}
+            <div class="border rounded-lg p-3 relative">
+              <button
+                type="button"
+                {{on "click" (fn this.handleRemoveImage index)}}
+                class="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600"
+              >
+                ×
+              </button>
+              {{#if img.preview}}
+                <img src={{img.preview}} alt="Preview" class="w-full h-32 object-cover rounded mb-2" />
+              {{/if}}
+              <label class="form-label">Color</label>
+              <div class="flex gap-2">
+                <input
+                  type="color"
+                  value={{if img.color img.color "#000000"}}
+                  {{on "input" (fn this.handleColorChange index target.value)}}
+                  class="w-10 h-10 rounded border cursor-pointer"
+                />
+                <input
+                  type="text"
+                  value={{img.color}}
+                  {{on "input" (fn this.handleColorChange index target.value)}}
+                  class="form-input flex-1"
+                  placeholder="Color name"
+                />
+              </div>
+            </div>
+          {{/each}}
+        </div>
+      {{/if}}
+    </div>
+
+    <div>
+      <label class="form-label">Name *</label>
+      <input
+        type="text"
+        value={{this.name}}
+        {{on "input" (fn (mut this.name) target.value)}}
+        class="form-input"
+        required
+      />
+    </div>
+
+    <div>
+      <label class="form-label">Category *</label>
+      <input
+        type="text"
+        value={{this.category}}
+        {{on "input" (fn (mut this.category) target.value)}}
+        class="form-input"
+        placeholder="e.g., Silk, Cotton, Designer"
+        required
+      />
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label class="form-label">Price *</label>
+        <input
+          type="number"
+          value={{this.originalPrice}}
+          {{on "input" (fn (mut this.originalPrice) target.value)}}
+          class="form-input"
+          min="0"
+          step="0.01"
+          required
+        />
+      </div>
+      <div>
+        <label class="form-label">Stock Count *</label>
+        <input
+          type="number"
+          value={{this.stockCount}}
+          {{on "input" (fn (mut this.stockCount) target.value)}}
+          class="form-input"
+          min="0"
+          required
+        />
+      </div>
+    </div>
+
+    <div>
+      <label class="form-label">Description</label>
+      <textarea
+        value={{this.description}}
+        {{on "input" (fn (mut this.description) target.value)}}
+        class="form-input"
+        rows="3"
+      ></textarea>
+    </div>
+
+    <div class="flex justify-between pt-4">
+      <button type="button" {{on "click" this.router.history.back}} class="btn-secondary">
+        Cancel
+      </button>
+      <button
+        type="submit"
+        class="btn-primary"
+        disabled={{or this.isSaving (not this.isValid)}}
+      >
+        {{#if this.isSaving}}{{if this.isEdit 'Updating...' 'Creating...'}}{{else}}{{if this.isEdit 'Update' 'Create'}} Product{{/if}}
+      </button>
+    </div>
+  </form>
+</div>

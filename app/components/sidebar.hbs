@@ -1,0 +1,33 @@
+<nav class="bg-indigo-600 text-white p-4">
+  <div class="flex items-center justify-between">
+    <h1 class="text-xl font-bold">Saree Admin</h1>
+  </div>
+</nav>
+
+<div class="flex">
+  <aside class="w-64 bg-white shadow-lg min-h-screen">
+    <div class="p-4">
+      <ul class="space-y-1">
+        <li>
+          <LinkTo @route="index" class="sidebar-link {{if this.isDashboard 'active'}}">
+            Dashboard
+          </LinkTo>
+        </li>
+        <li>
+          <LinkTo @route="products" class="sidebar-link {{if this.isProducts 'active'}}">
+            Products
+          </LinkTo>
+        </li>
+        <li>
+          <LinkTo @route="youtube" class="sidebar-link {{if this.isYoutube 'active'}}">
+            YouTube Videos
+          </LinkTo>
+        </li>
+      </ul>
+    </div>
+  </aside>
+
+  <main class="flex-1 p-6">
+    {{outlet}}
+  </main>
+</div>
