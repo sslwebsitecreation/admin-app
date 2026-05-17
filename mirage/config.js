@@ -159,6 +159,11 @@ export default function() {
     success: true
   }));
 
+  server.post('/rebuild-cache', () => ({
+    success: true,
+    message: 'Cache rebuilt successfully'
+  }));
+
   server.post('/youtube', (schema, request) => {
     const attrs = JSON.parse(request.requestBody);
     const newVideo = {

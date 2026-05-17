@@ -3,6 +3,8 @@ import { inject as service } from '@ember/service';
 import { action } from '@ember/object';
 import { tracked } from '@glimmer/tracking';
 
+const STORAGE_KEY = 'admin_product_form_draft';
+
 export default class ProductFormComponent extends Component {
   @service api;
   @service router;
@@ -17,6 +19,7 @@ export default class ProductFormComponent extends Component {
   @tracked isUploading = false;
   @tracked isSaving = false;
   @tracked error = null;
+  @tracked previewImage = null;
 
   constructor() {
     super(...arguments);
@@ -26,8 +29,71 @@ export default class ProductFormComponent extends Component {
       this.category = this.args.product.category || '';
       this.originalPrice = this.args.product.original_price?.toString() || '';
       this.stockCount = this.args.product.stock_count?.toString() || '';
-      this.images = this.args.product.images ? [...this.args.product.images] : [];
+      
+      if (this.args.product.images) {
+        this.images = this.args.product.images.map(img => ({
+          color: img.color || '#000000',
+          key: img.key,
+          url: img.key,
+          preview: img.key
+        }));
+      }
+    } else {
+      this.loadDraft();
     }
+    window.addEventListener('beforeunload', this.handleBeforeUnload);
+  }
+
+  get hasUnsavedChanges() {
+    return this.name || this.description || this.category || this.originalPrice || this.stockCount || this.images.length > 0;
+  }
+
+  loadDraft() {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const data = JSON.parse(saved);
+        this.name = data.name || '';
+        this.description = data.description || '';
+        this.category = data.category || '';
+        this.originalPrice = data.originalPrice || '';
+        this.stockCount = data.stockCount || '';
+      }
+    } catch (e) {
+      console.error('Failed to load draft:', e);
+    }
+  }
+
+  saveDraft() {
+    try {
+      const data = {
+        name: this.name,
+        description: this.description,
+        category: this.category,
+        originalPrice: this.originalPrice,
+        stockCount: this.stockCount
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    } catch (e) {
+      console.error('Failed to save draft:', e);
+    }
+  }
+
+  clearDraft() {
+    localStorage.removeItem(STORAGE_KEY);
+  }
+
+  handleBeforeUnload = (event) => {
+    if (this.hasUnsavedChanges) {
+      this.saveDraft();
+      event.preventDefault();
+      event.returnValue = '';
+    }
+  }
+
+  willDestroy() {
+    super.willDestroy(...arguments);
+    window.removeEventListener('beforeunload', this.handleBeforeUnload);
   }
 
   get isValid() {
@@ -39,28 +105,45 @@ export default class ProductFormComponent extends Component {
   }
 
   @action
+  saveDraftOnInput() {
+    this.saveDraft();
+  }
+
+  @action
+  openPreview(imageUrl) {
+    this.previewImage = imageUrl;
+  }
+
+  @action
+  closePreview() {
+    this.previewImage = null;
+  }
+
+  @action
   async handleAddImage(event) {
-    const file = event.target.files?.[0];
-    if (!file) return;
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
 
     this.isUploading = true;
     this.error = null;
 
     try {
-      const result = await this.api.uploadImage(file, 1200, 1600);
+      for (const file of files) {
+        const result = await this.api.uploadImage(file, 1200, 1600);
 
-      if (result.success) {
-        this.images = [
-          ...this.images,
-          {
-            color: '',
-            key: result.key,
-            url: result.url,
-            preview: URL.createObjectURL(file)
-          }
-        ];
-      } else {
-        this.error = result.message || 'Failed to upload image';
+        if (result.key) {
+          this.images = [
+            ...this.images,
+            {
+              color: '',
+              key: result.key,
+              url: result.url,
+              preview: URL.createObjectURL(file)
+            }
+          ];
+        } else {
+          this.error = 'Failed to upload image';
+        }
       }
     } catch (err) {
       this.error = err.message || 'Upload failed';
@@ -103,8 +186,8 @@ export default class ProductFormComponent extends Component {
     }
 
     const imagesPayload = this.images.map(img => ({
-      color: img.color || 'Default',
-      image_link: img.url || img.key
+      color: img.color || '#000000',
+      image_link: img.key
     }));
 
     this.isSaving = true;
@@ -122,6 +205,7 @@ export default class ProductFormComponent extends Component {
           images: imagesPayload
         });
         if (result.products) {
+          this.clearDraft();
           this.router.transitionTo('products');
         } else {
           this.error = result.message || 'Failed to update product';
@@ -137,6 +221,7 @@ export default class ProductFormComponent extends Component {
         });
 
         if (result.products) {
+          this.clearDraft();
           this.router.transitionTo('products');
         } else {
           this.error = result.message || 'Failed to create product';

@@ -8,53 +8,78 @@
   {{/if}}
 
   <form {{on "submit" this.handleSubmit}} class="space-y-4">
-    <div>
+<div>
       <label class="form-label">Product Images (1200x1600)</label>
-      <div class="mt-1">
-        <input
-          type="file"
-          accept="image/*"
-          {{on "change" this.handleAddImage}}
-          class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
-        />
-        {{#if this.isUploading}}
-          <p class="text-sm text-gray-500 mt-1">Uploading...</p>
-        {{/if}}
-      </div>
-
-      {{#if this.images}}
-        <div class="mt-4 grid grid-cols-2 gap-4">
+      
+      <table class="min-w-full divide-y divide-gray-200 mb-4">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="table-header">#</th>
+            <th class="table-header">Image</th>
+            <th class="table-header">Color</th>
+            <th class="table-header">Action</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
           {{#each this.images as |img index|}}
-            <div class="border rounded-lg p-3 relative">
-              <button
-                type="button"
-                {{on "click" (fn this.handleRemoveImage index)}}
-                class="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600"
-              >
-                ×
-              </button>
-              {{#if img.preview}}
-                <img src={{img.preview}} alt="Preview" class="w-full h-32 object-cover rounded mb-2" />
-              {{/if}}
-              <label class="form-label">Color</label>
-              <div class="flex gap-2">
-                <input
-                  type="color"
-                  value={{if img.color img.color "#000000"}}
-                  {{on "input" (fn this.handleColorChange index target.value)}}
-                  class="w-10 h-10 rounded border cursor-pointer"
-                />
-                <input
-                  type="text"
-                  value={{img.color}}
-                  {{on "input" (fn this.handleColorChange index target.value)}}
-                  class="form-input flex-1"
-                  placeholder="Color name"
-                />
-              </div>
-            </div>
+            <tr>
+              <td class="table-cell">{{inc index}}</td>
+              <td class="table-cell">
+                {{#if img.preview}}
+                  <img 
+                    src={{image-url img.preview}} 
+                    alt="Preview" 
+                    class="w-20 h-24 object-cover rounded cursor-zoom-in"
+                    {{on "click" (fn this.openPreview (image-url img.preview))}}
+                  />
+                {{else}}
+                  <span class="text-gray-400">Uploading...</span>
+                {{/if}}
+              </td>
+              <td class="table-cell">
+                <div class="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={{if img.color img.color "#000000"}}
+                    {{on "input" (fn this.handleColorChange index target.value)}}
+                    class="w-10 h-10 rounded border cursor-pointer"
+                  />
+                  <input
+                    type="text"
+                    value={{img.color}}
+                    {{on "input" (fn this.handleColorChange index target.value)}}
+                    class="form-input w-24"
+                    placeholder="#000000"
+                  />
+                </div>
+              </td>
+              <td class="table-cell">
+                <button
+                  type="button"
+                  {{on "click" (fn this.handleRemoveImage index)}}
+                  class="btn-danger text-sm"
+                >
+                  Remove
+                </button>
+              </td>
+            </tr>
           {{/each}}
-        </div>
+          <tr>
+            <td class="table-cell">{{add this.images.length 1}}</td>
+            <td class="table-cell" colspan="4">
+              <input
+                type="file"
+                accept="image/*"
+                {{on "change" this.handleAddImage}}
+                class="block w-full text-sm text-gray-500 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700"
+              />
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      
+      {{#if this.isUploading}}
+        <p class="text-sm text-gray-500">Uploading image...</p>
       {{/if}}
     </div>
 
@@ -64,6 +89,7 @@
         type="text"
         value={{this.name}}
         {{on "input" (fn (mut this.name) target.value)}}
+        {{on "input" this.saveDraftOnInput}}
         class="form-input"
         required
       />
@@ -75,6 +101,7 @@
         type="text"
         value={{this.category}}
         {{on "input" (fn (mut this.category) target.value)}}
+        {{on "input" this.saveDraftOnInput}}
         class="form-input"
         placeholder="e.g., Silk, Cotton, Designer"
         required
@@ -88,6 +115,7 @@
           type="number"
           value={{this.originalPrice}}
           {{on "input" (fn (mut this.originalPrice) target.value)}}
+          {{on "input" this.saveDraftOnInput}}
           class="form-input"
           min="0"
           step="0.01"
@@ -100,6 +128,7 @@
           type="number"
           value={{this.stockCount}}
           {{on "input" (fn (mut this.stockCount) target.value)}}
+          {{on "input" this.saveDraftOnInput}}
           class="form-input"
           min="0"
           required
@@ -112,6 +141,7 @@
       <textarea
         value={{this.description}}
         {{on "input" (fn (mut this.description) target.value)}}
+        {{on "input" this.saveDraftOnInput}}
         class="form-input"
         rows="3"
       ></textarea>
@@ -130,4 +160,27 @@
       </button>
     </div>
   </form>
+
+  {{#if this.previewImage}}
+    <div 
+      class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50"
+      {{on "click" this.closePreview}}
+    >
+      <div class="relative max-w-full max-h-full p-4">
+        <button
+          type="button"
+          {{on "click" this.closePreview}}
+          class="absolute top-2 right-2 text-white text-3xl font-bold hover:text-gray-300 z-10 p-2"
+        >
+          &times;
+        </button>
+        <p class="text-white text-center text-sm mb-2">1200 x 1600</p>
+        <img 
+          src={{this.previewImage}} 
+          alt="Full preview" 
+          class="max-w-[1200px] max-h-[1600px] object-contain"
+        />
+      </div>
+    </div>
+  {{/if}}
 </div>

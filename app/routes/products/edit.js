@@ -2,11 +2,11 @@ import Route from '@ember/routing/route';
 import { inject as service } from '@ember/service';
 
 export default class ProductsEditRoute extends Route {
-  @service api;
+  @service data;
 
   async model(params) {
-    const data = await this.api.getAll();
-    const products = data.products || [];
+    const result = await this.data.fetchAll();
+    const products = result.products || [];
     return products.find(p => p.id == params.id);
   }
 }
