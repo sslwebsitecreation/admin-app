@@ -4,8 +4,8 @@ module.exports = function (environment) {
   let ENV = {
     modulePrefix: 'admin-app',
     environment,
-    rootURL: '/',
-    locationType: 'auto',
+    rootURL: '/admin-app/',
+    locationType: 'hash',
     EmberENV: {
       FEATURES: {
       },
