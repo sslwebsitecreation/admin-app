@@ -1,0 +1,79 @@
+<h1 class="text-red-500 text-5xl mb-6">
+  DASHBOARD WORKING
+</h1>
+
+<div class="space-y-8">
+
+  <h1 class="text-4xl font-bold">
+    Dashboard
+  </h1>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+    <!-- Products -->
+
+    <div class="bg-white shadow rounded-2xl p-8 border">
+
+      <h2 class="text-gray-500 text-lg font-semibold mb-6">
+        Total Products
+      </h2>
+
+      <div class="text-6xl font-bold text-indigo-600">
+        {{@model.products}}
+      </div>
+
+    </div>
+
+    <!-- YouTube -->
+
+    <div class="bg-white shadow rounded-2xl p-8 border">
+
+      <h2 class="text-gray-500 text-lg font-semibold mb-6">
+        YouTube Videos
+      </h2>
+
+      <div class="text-6xl font-bold text-indigo-600">
+        {{@model.youtube}}
+      </div>
+
+    </div>
+
+    <!-- Visitors -->
+
+    <div class="bg-white shadow rounded-2xl p-8 border">
+
+      <h2 class="text-gray-500 text-lg font-semibold mb-6">
+        Website Visitors
+      </h2>
+
+      <div class="text-6xl font-bold text-indigo-600">
+        {{@model.visitors}}
+      </div>
+
+      <div class="mt-4 text-sm text-gray-400">
+        Approximate visits
+      </div>
+
+    </div>
+
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+    <LinkTo
+      @route="products.new"
+      class="bg-indigo-600 hover:bg-indigo-700 transition text-white text-center py-4 rounded-2xl text-lg font-semibold shadow"
+    >
+      Add New Product
+    </LinkTo>
+
+    <LinkTo
+      @route="youtube.new"
+      class="bg-indigo-600 hover:bg-indigo-700 transition text-white text-center py-4 rounded-2xl text-lg font-semibold shadow"
+    >
+      Add YouTube Video
+    </LinkTo>
+
+  </div>
+
+</div>

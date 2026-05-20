@@ -1,0 +1,85 @@
+<div class="card max-w-2xl mx-auto">
+  <h2 class="text-2xl font-bold mb-6">{{if this.isEdit 'Edit' 'Add'}} YouTube Video</h2>
+
+  {{#if this.error}}
+    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+      {{this.error}}
+    </div>
+  {{/if}}
+
+  <form {{on "submit" this.handleSubmit}} class="space-y-4">
+    <div>
+      <label class="form-label">YouTube URL *</label>
+      <input
+        type="url"
+        value={{this.rawInput}}
+        {{on "input" this.handleLinkInput}}
+        class="form-input"
+        placeholder="https://www.youtube.com/watch?v=abc123xyz"
+      />
+      {{#if this.rawInput}}
+        {{#if this.videoIdValid}}
+          <p class="text-sm text-green-600 mt-1">Valid video ID: {{this.link}}</p>
+        {{else}}
+          <p class="text-sm text-red-600 mt-1">Invalid YouTube URL</p>
+        {{/if}}
+      {{/if}}
+    </div>
+
+    {{#if this.previewUrl}}
+      <div class="aspect-video rounded-lg overflow-hidden bg-gray-100">
+        <iframe
+          src={{this.previewUrl}}
+          class="w-full h-full"
+          frameborder="0"
+          allowfullscreen
+        ></iframe>
+      </div>
+    {{/if}}
+
+    <div>
+      <label class="form-label">Title *</label>
+      <input
+        type="text"
+        value={{this.title}}
+        {{on "input" this.handleTitleInput}}
+        class="form-input"
+        required
+      />
+    </div>
+
+    <div>
+      <label class="form-label">Description</label>
+      <textarea
+        value={{this.description}}
+        {{on "input" this.handleDescriptionInput}}
+        class="form-input"
+        rows="3"
+      ></textarea>
+    </div>
+
+    <div>
+      <label class="form-label">Product IDs (comma-separated)</label>
+      <input
+        type="text"
+        value={{this.productIds}}
+        {{on "input" this.handleProductIdsInput}}
+        class="form-input"
+        placeholder="1, 2, 3"
+      />
+    </div>
+
+    <div class="flex justify-between pt-4">
+      <button type="button" {{on "click" this.goBack}} class="btn-secondary">
+        Cancel
+      </button>
+      <button
+        type="submit"
+        class="btn-primary"
+        disabled={{or this.isSaving (not this.isValid)}}
+      >
+        {{#if this.isSaving}}Saving...{{else}}{{if this.isEdit 'Update' 'Add'}} Video{{/if}}
+      </button>
+    </div>
+  </form>
+</div>

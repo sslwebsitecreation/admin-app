@@ -1,0 +1,69 @@
+<div class="card">
+  <div class="flex justify-between items-center mb-6">
+    <h2 class="text-2xl font-bold">Products</h2>
+    <LinkTo @route="products.new" class="btn-primary">Add Product</LinkTo>
+  </div>
+
+  {{#if @model.error}}
+    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+      {{@model.error}}
+    </div>
+  {{/if}}
+
+  {{#if @model.products}}
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="table-header">Images</th>
+            <th class="table-header">Name</th>
+            <th class="table-header">Category</th>
+            <th class="table-header">Price</th>
+            <th class="table-header">Stock</th>
+            <th class="table-header">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          {{#each @model.products as |product|}}
+            <tr>
+              <td class="table-cell">
+                {{#if product.images}}
+                  <div class="flex gap-1">
+                    {{#each product.images as |img|}}
+                      <div class="relative">
+                        <img src={{image-url img.key}} alt={{img.color}} class="w-12 h-16 object-cover rounded" />
+                        {{#if img.color}}
+                          <span class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs text-center py-0.5">{{img.color}}</span>
+                        {{/if}}
+                      </div>
+                    {{/each}}
+                  </div>
+                {{else}}
+                  <span class="text-gray-400">No image</span>
+                {{/if}}
+              </td>
+              <td class="table-cell font-medium">{{product.name}}</td>
+              <td class="table-cell">{{product.category}}</td>
+              <td class="table-cell">₹{{product.original_price}}</td>
+              <td class="table-cell">
+                <StockBadge @count={{product.stock_count}} />
+              </td>
+              <td class="table-cell">
+                <div class="flex gap-2">
+                  <LinkTo @route="products.edit" @model={{product.id}} class="btn-secondary text-sm">
+                    Edit
+                  </LinkTo>
+                  <button type="button" {{on "click" (fn this.deleteProduct product.id)}} class="btn-danger text-sm">
+                    Delete
+                  </button>
+                </div>
+              </td>
+            </tr>
+          {{/each}}
+        </tbody>
+      </table>
+    </div>
+  {{else}}
+    <p class="text-gray-500 text-center py-8">No products yet. <LinkTo @route="products.new" class="text-indigo-600 hover:underline">Add one</LinkTo></p>
+  {{/if}}
+</div>
