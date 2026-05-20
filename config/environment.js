@@ -17,6 +17,7 @@ module.exports = function (environment) {
     APP: {
       apiBaseUrl: '/api/v1',
       imageCdnUrl: 'https://images.abc.in',
+      handpickedLimit: 5,
     },
   };
 

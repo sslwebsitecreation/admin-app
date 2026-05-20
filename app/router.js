@@ -15,6 +15,7 @@ Router.map(function () {
     this.route('new');
     this.route('edit', { path: '/edit/:id' });
   });
+  this.route('handpicked');
   this.route('utilities', function () {
     this.route('image-converter');
   });

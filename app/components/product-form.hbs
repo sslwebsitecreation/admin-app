@@ -1,50 +1,47 @@
-<div class="card max-w-2xl mx-auto">
-  <h2 class="text-2xl font-bold mb-6">{{if this.isEdit "Edit" "Add"}} Product</h2>
+<div class="form-card">
+  <h2>{{if this.isEdit "Edit" "Add"}} Product</h2>
 
   {{#if this.error}}
-    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-      {{this.error}}
-    </div>
+    <div class="error-state">{{this.error}}</div>
   {{/if}}
 
   <form {{on "submit" this.handleSubmit}} class="space-y-4">
     <div>
       <label class="form-label">Product Images (1200x1600)</label>
-      
+
       <div class="space-y-3 mb-4">
         {{#each this.images as |img idx|}}
-          {{log img}}
-          <div class="flex items-center gap-4 p-3 border border-gray-200 rounded-lg bg-gray-50">
-            <div class="w-20 h-24 flex-shrink-0 rounded overflow-hidden border border-gray-300 bg-white">
+          <div class="image-row">
+            <div class="image-row-preview">
               {{#if img.preview}}
-                <img src={{img.preview}} alt="Preview" class="w-full h-full object-contain" />
+                <img src={{img.preview}} alt="Preview" />
               {{else}}
-                <div class="w-full h-full flex items-center justify-center text-gray-400 text-xs">No Image</div>
+                <div class="w-full h-full flex items-center justify-center text-light text-xs">No Image</div>
               {{/if}}
             </div>
-            
+
             <div class="flex-1 min-w-0">
-              <div class="text-xs text-gray-500 mb-1">{{img.status}}</div>
+              <div class="text-xs text-secondary mb-1">{{img.status}}</div>
               {{#if img.key}}
-                <div class="text-xs text-gray-600">Key: {{img.key}}</div>
+                <div class="text-xs text-secondary">Key: {{img.key}}</div>
               {{/if}}
             </div>
-            
+
             <div class="flex items-center gap-2">
-              <button type="button" {{on "click" this.chooseFile}} class="px-3 py-1 bg-gray-600 text-white text-sm rounded">Choose</button>
+              <button type="button" {{on "click" this.chooseFile}} class="btn btn-sm btn-secondary">Choose</button>
             </div>
-            
+
             <div class="flex items-center gap-2">
-              <span class="text-xs text-gray-500">Color:</span>
-              <input type="text" value={{img.color}} data-color-index={{idx}} {{on "input" this.handleColorInput}} class="form-input w-20 color-input" placeholder="#000000" />
+              <span class="text-xs text-secondary">Color:</span>
+              <input type="text" value={{img.color}} data-color-index={{idx}} {{on "input" this.handleColorInput}} class="form-input color-input" placeholder="#000000" />
             </div>
-            
-            <button type="button" data-remove-index={{idx}} {{on "click" this.removeImage}} class="text-red-600 text-sm">Remove</button>
+
+            <button type="button" data-remove-index={{idx}} {{on "click" this.removeImage}} class="btn btn-sm btn-danger">Remove</button>
           </div>
         {{/each}}
       </div>
-      
-      <button type="button" {{on "click" this.addImage}} class="px-4 py-2 bg-indigo-600 text-white rounded-lg">+ Add Image Row</button>
+
+      <button type="button" {{on "click" this.addImage}} class="btn btn-sm btn-primary">+ Add Image Row</button>
     </div>
 
     <div>
@@ -73,9 +70,9 @@
       <textarea value={{this.description}} {{on "input" this.updateDesc}} class="form-input" rows="3"></textarea>
     </div>
 
-    <div class="flex justify-between pt-4">
-      <button type="button" {{on "click" this.goBack}} class="btn-secondary">Cancel</button>
-      <button type="submit" class="btn-primary" disabled={{not this.isValid}}>
+    <div class="form-actions">
+      <button type="button" {{on "click" this.goBack}} class="btn btn-secondary">Cancel</button>
+      <button type="submit" class="btn btn-primary" disabled={{not this.isValid}}>
         {{#if this.isSaving}}Saving...{{else}}{{if this.isEdit "Update" "Create"}} Product{{/if}}
       </button>
     </div>

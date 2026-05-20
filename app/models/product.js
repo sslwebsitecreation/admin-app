@@ -19,6 +19,8 @@ export default class Product {
   stock_count = 0;
   images = [];
   created_at = null;
+  handpicked = false;
+  handpicked_order = 0;
 
   static fromJson(json) {
     const product = new Product();

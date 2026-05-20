@@ -1,60 +1,61 @@
-<div class="card">
-  <div class="flex justify-between items-center mb-6">
-    <h2 class="text-2xl font-bold">Products</h2>
-    <LinkTo @route="products.new" class="btn-primary">Add Product</LinkTo>
-  </div>
+{{#if @model.error}}
+  <div class="error-state">{{@model.error}}</div>
+{{/if}}
 
-  {{#if @model.error}}
-    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-      {{@model.error}}
-    </div>
-  {{/if}}
+<PageHeader @title="All Products" @buttonText="Add Product" @buttonRoute="products.new" />
 
-  {{#if @model.products}}
-    <div class="overflow-x-auto">
-      <table class="min-w-full divide-y divide-gray-200">
-        <thead class="bg-gray-50">
+{{#if @model.loading}}
+  <LoadingSkeleton @type="table" />
+{{else if @model.products}}
+  {{!-- Desktop Table --}}
+  <div class="table-container desktop-only fade-in">
+    <div class="table-wrapper">
+      <table>
+        <thead>
           <tr>
-            <th class="table-header">Images</th>
-            <th class="table-header">Name</th>
-            <th class="table-header">Category</th>
-            <th class="table-header">Price</th>
-            <th class="table-header">Stock</th>
-            <th class="table-header">Actions</th>
+            <th>Product Image</th>
+            <th>Product Name</th>
+            <th>Category</th>
+            <th>Price</th>
+            <th>Stock</th>
+            <th>Actions</th>
           </tr>
         </thead>
-        <tbody class="bg-white divide-y divide-gray-200">
+        <tbody>
           {{#each @model.products as |product|}}
             <tr>
-              <td class="table-cell">
-                {{#if product.images}}
-                  <div class="flex gap-1">
-                    {{#each product.images as |img|}}
-                      <div class="relative">
-                        <img src={{image-url img.key}} alt={{img.color}} class="w-12 h-16 object-cover rounded" />
-                        {{#if img.color}}
-                          <span class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs text-center py-0.5">{{img.color}}</span>
-                        {{/if}}
-                      </div>
-                    {{/each}}
-                  </div>
+              <td>
+                {{#if product.images.length}}
+                  <img src={{image-url product.images.firstObject.key}} alt={{product.name}} class="thumbnail" />
                 {{else}}
-                  <span class="text-gray-400">No image</span>
+                  <div class="thumbnail flex items-center justify-center" style="background: var(--bg-main);">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-light)" stroke-width="1.5">
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                      <circle cx="8.5" cy="8.5" r="1.5"/>
+                      <polyline points="21 15 16 10 5 21"/>
+                    </svg>
+                  </div>
                 {{/if}}
               </td>
-              <td class="table-cell font-medium">{{product.name}}</td>
-              <td class="table-cell">{{product.category}}</td>
-              <td class="table-cell">₹{{product.original_price}}</td>
-              <td class="table-cell">
+              <td class="font-semibold">{{product.name}}</td>
+              <td class="text-secondary">{{product.category}}</td>
+              <td class="font-semibold">₹{{product.original_price}}</td>
+              <td>
                 <StockBadge @count={{product.stock_count}} />
               </td>
-              <td class="table-cell">
+              <td>
                 <div class="flex gap-2">
-                  <LinkTo @route="products.edit" @model={{product.id}} class="btn-secondary text-sm">
-                    Edit
+                  <LinkTo @route="products.edit" @model={{product.id}} class="btn-icon" aria-label="Edit">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+                      <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                    </svg>
                   </LinkTo>
-                  <button type="button" {{on "click" (fn this.deleteProduct product.id)}} class="btn-danger text-sm">
-                    Delete
+                  <button type="button" {{on "click" (fn this.deleteProduct product.id)}} class="btn-icon danger" aria-label="Delete">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="3 6 5 6 21 6"/>
+                      <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+                    </svg>
                   </button>
                 </div>
               </td>
@@ -63,7 +64,25 @@
         </tbody>
       </table>
     </div>
-  {{else}}
-    <p class="text-gray-500 text-center py-8">No products yet. <LinkTo @route="products.new" class="text-indigo-600 hover:underline">Add one</LinkTo></p>
-  {{/if}}
-</div>
+  </div>
+
+  {{!-- Mobile Cards --}}
+  <div class="mobile-only grid gap-4 fade-in">
+    {{#each @model.products as |product|}}
+      <ProductCard @product={{product}} @onDelete={{this.deleteProduct}} />
+    {{/each}}
+  </div>
+{{else}}
+  <div class="empty-state">
+    <div class="empty-state-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 002 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/>
+        <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+        <line x1="12" y1="22.08" x2="12" y2="12"/>
+      </svg>
+    </div>
+    <h3 class="empty-state-title">No products yet</h3>
+    <p class="empty-state-text">Start by adding your first saree to the collection.</p>
+    <LinkTo @route="products.new" class="btn btn-primary mt-6">Add Product</LinkTo>
+  </div>
+{{/if}}

@@ -1,0 +1,54 @@
+<header class="top-header">
+  <div class="top-header-inner">
+    <div class="top-header-logo">
+      <div class="top-header-logo-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+          <path d="M2 17l10 5 10-5"/>
+          <path d="M2 12l10 5 10-5"/>
+        </svg>
+      </div>
+      <span class="top-header-brand">Riya Sri Silks</span>
+    </div>
+
+    <div class="top-header-center desktop-only">
+      <div class="search-bar">
+        <span class="search-bar-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/>
+            <path d="M21 21l-4.35-4.35"/>
+          </svg>
+        </span>
+        <input
+          type="text"
+          class="search-bar-input"
+          placeholder="Search products by name..."
+          value={{this.query}}
+          {{on "input" this.handleSearch}}
+        />
+      </div>
+    </div>
+
+    <div class="top-header-right">
+      <span class="top-header-tagline">The Elegance of Every Drape</span>
+    </div>
+
+    <div class="mobile-search mobile-only">
+      <div class="search-bar">
+        <span class="search-bar-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/>
+            <path d="M21 21l-4.35-4.35"/>
+          </svg>
+        </span>
+        <input
+          type="text"
+          class="search-bar-input"
+          placeholder="Search products by name..."
+          value={{this.query}}
+          {{on "input" this.handleSearch}}
+        />
+      </div>
+    </div>
+  </div>
+</header>

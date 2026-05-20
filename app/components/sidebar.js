@@ -26,6 +26,10 @@ export default class SidebarComponent extends Component {
     return this.router.currentRouteName.startsWith('youtube');
   }
 
+  get isHandpicked() {
+    return this.router.currentRouteName === 'handpicked';
+  }
+
   get isUtilities() {
     return this.router.currentRouteName.startsWith('utilities');
   }

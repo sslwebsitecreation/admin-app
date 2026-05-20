@@ -1,0 +1,41 @@
+<div class="product-card fade-in">
+  <div>
+    {{#if @product.images.length}}
+      <img
+        src={{image-url @product.images.firstObject.key}}
+        alt={{@product.name}}
+        class="product-card-image"
+      />
+    {{else}}
+      <div class="product-card-image flex items-center justify-center" style="background: var(--bg-main);">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text-light)" stroke-width="1.5">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+          <circle cx="8.5" cy="8.5" r="1.5"/>
+          <polyline points="21 15 16 10 5 21"/>
+        </svg>
+      </div>
+    {{/if}}
+  </div>
+  <div class="product-card-body">
+    <p class="product-card-name">{{@product.name}}</p>
+    <p class="product-card-category">{{@product.category}}</p>
+    <p class="product-card-price">₹{{@product.original_price}}</p>
+    <div class="product-card-footer">
+      <StockBadge @count={{@product.stock_count}} />
+      <div class="product-card-actions">
+        <LinkTo @route="products.edit" @model={{@product.id}} class="btn-icon" aria-label="Edit product">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+            <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+          </svg>
+        </LinkTo>
+        <button type="button" {{on "click" (fn @onDelete @product.id)}} class="btn-icon danger" aria-label="Delete product">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

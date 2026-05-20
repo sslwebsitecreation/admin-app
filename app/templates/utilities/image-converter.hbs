@@ -1,45 +1,45 @@
 <div class="card">
-  <h2 class="text-2xl font-bold mb-6">Image Converter</h2>
-  <p class="text-gray-600 mb-6">Convert any image to WebP with custom dimensions and quality</p>
+  <h2 class="section-title mb-4">Image Converter</h2>
+  <p class="text-secondary mb-6">Convert any image to WebP with custom dimensions and quality</p>
 
   {{#if this.error}}
-    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-      {{this.error}}
-    </div>
+    <div class="error-state">{{this.error}}</div>
   {{/if}}
 
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+  <div class="grid grid-cols-1 desktop:grid-cols-2 gap-6">
     <div>
-      <h3 class="font-medium mb-3">1. Select Image</h3>
+      <h3 class="font-semibold mb-3">1. Select Image</h3>
       <input
         type="file"
         accept="image/*"
         {{on "change" this.handleFileSelect}}
-        class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700"
+        class="block w-full text-sm"
+        style="color: var(--text-secondary);"
       />
 
       {{#if this.fileInfo}}
-        <div class="mt-4 p-4 bg-gray-50 rounded-lg">
-          <h4 class="font-medium text-sm text-gray-700 mb-2">Original File Info:</h4>
-          <div class="text-sm text-gray-600 space-y-1">
-            <p><strong>Name:</strong> {{this.fileInfo.name}}</p>
-            <p><strong>Size:</strong> {{this.fileInfo.size}}</p>
-            <p><strong>Dimensions:</strong> {{this.fileInfo.width}} x {{this.fileInfo.height}}</p>
-            <p><strong>Format:</strong> {{this.fileInfo.format}}</p>
+        <div class="mt-4 p-4" style="background: var(--bg-main); border-radius: var(--radius-sm);">
+          <h4 class="font-semibold text-sm mb-2" style="color: var(--text-secondary);">Original File Info:</h4>
+          <div class="text-sm" style="color: var(--text-secondary);">
+            <p class="mb-1"><strong>Name:</strong> {{this.fileInfo.name}}</p>
+            <p class="mb-1"><strong>Size:</strong> {{this.fileInfo.size}}</p>
+            <p class="mb-1"><strong>Dimensions:</strong> {{this.fileInfo.width}} x {{this.fileInfo.height}}</p>
+            <p class="mb-1"><strong>Format:</strong> {{this.fileInfo.format}}</p>
           </div>
         </div>
       {{/if}}
 
       {{#if this.originalPreview}}
         <div class="mt-4">
-          <h4 class="font-medium text-sm text-gray-700 mb-2">Original Preview:</h4>
-          <div class="border rounded-lg overflow-hidden bg-gray-100" style="max-height: 300px; overflow-y: auto;">
-            <img src={{this.originalPreview}} alt="Original" class="max-w-full" />
+          <h4 class="font-semibold text-sm mb-2" style="color: var(--text-secondary);">Original Preview:</h4>
+          <div style="border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; background: var(--bg-main); max-height: 300px; overflow-y: auto;">
+            <img src={{this.originalPreview}} alt="Original" class="w-full" />
           </div>
           <button
             type="button"
             {{on "click" this.handleViewOriginalFull}}
-            class="text-sm text-indigo-600 mt-2 hover:underline"
+            class="btn btn-sm btn-ghost mt-2"
+            style="color: var(--primary);"
           >
             View Full Size
           </button>
@@ -48,12 +48,12 @@
     </div>
 
     <div>
-      <h3 class="font-medium mb-3">2. Settings</h3>
-      
+      <h3 class="font-semibold mb-3">2. Settings</h3>
+
       <div class="space-y-4">
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <label class="form-label">Width (px) - Recommended: 1200</label>
+            <label class="form-label">Width (px) — Recommended: 1200</label>
             <input
               type="number"
               value={{this.width}}
@@ -64,7 +64,7 @@
             />
           </div>
           <div>
-            <label class="form-label">Height (px) - Recommended: 1600</label>
+            <label class="form-label">Height (px) — Recommended: 1600</label>
             <input
               type="number"
               value={{this.height}}
@@ -84,16 +84,17 @@
             max="100"
             value={{this.quality}}
             {{on "input" this.handleQualityChange}}
-            class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+            class="w-full"
+            style="height: 8px; background: var(--border); border-radius: 4px; outline: none; -webkit-appearance: none; appearance: none;"
           />
-          <div class="flex justify-between text-xs text-gray-500 mt-1">
+          <div class="flex justify-between text-xs mt-1" style="color: var(--text-light);">
             <span>Smaller file</span>
             <span>Better quality</span>
           </div>
         </div>
 
         <div>
-          <label class="form-label">Target Output Size (KB) - Recommended: 200, Max: 400</label>
+          <label class="form-label">Target Output Size (KB) — Recommended: 200, Max: 400</label>
           <input
             type="number"
             value={{this.targetSizeKB}}
@@ -102,14 +103,14 @@
             min="50"
             max="400"
           />
-          <p class="text-xs text-gray-500 mt-1">Will reduce quality to meet this size if needed</p>
+          <p class="text-xs mt-1" style="color: var(--text-light);">Will reduce quality to meet this size if needed</p>
         </div>
 
         <button
           type="button"
           {{on "click" this.handleConvert}}
           disabled={{or this.isProcessing (not this.selectedFile)}}
-          class="btn-primary w-full"
+          class="btn btn-primary w-full"
         >
           {{#if this.isProcessing}}Processing...{{else}}Convert to WebP{{/if}}
         </button>
@@ -117,80 +118,84 @@
 
       {{#if this.convertedPreview}}
         <div class="mt-6">
-          <h4 class="font-medium text-sm text-gray-700 mb-2">
+          <h4 class="font-semibold text-sm mb-2" style="color: var(--text-secondary);">
             Converted: {{this.width}}x{{this.height}} ({{this.convertedSize}})
           </h4>
-          <img src={{this.convertedPreview}} alt="Converted" class="max-w-full h-auto rounded-lg border" style="max-height: 300px;" />
-          
+          <img src={{this.convertedPreview}} alt="Converted" class="w-full h-auto" style="border-radius: var(--radius-sm); border: 1px solid var(--border); max-height: 300px;" />
+
           <div class="mt-4 flex gap-2">
             <button
               type="button"
               {{on "click" this.handleDownload}}
-              class="btn-primary flex-1"
+              class="btn btn-primary flex-1"
             >
               Download WebP
             </button>
             <button
               type="button"
               {{on "click" this.handleViewExactSize}}
-              class="btn-secondary"
+              class="btn btn-secondary"
             >
               View Exact Size
             </button>
             <button
               type="button"
               {{on "click" this.handleReset}}
-              class="btn-secondary"
+              class="btn btn-secondary"
             >
               Reset
             </button>
           </div>
         </div>
       {{/if}}
-
-  {{#if this.showExactPreview}}
-    <div 
-      class="fixed inset-0 bg-black bg-opacity-90 z-50 overflow-auto"
-      {{on "click" this.handleCloseExactPreview}}
-    >
-      <div class="flex justify-center items-start min-h-screen p-8">
-        <div class="relative">
-          <button
-            type="button"
-            {{on "click" this.handleCloseExactPreview}}
-            class="absolute -top-2 -right-2 text-white text-3xl font-bold hover:text-gray-300 z-50 bg-black rounded-full w-10 h-10 flex items-center justify-center"
-          >
-            &times;
-          </button>
-          <p class="text-white text-center text-sm mb-2">{{this.width}} x {{this.height}} ({{this.convertedSize}})</p>
-          <div class="bg-white shadow-lg">
-            <img src={{this.convertedPreview}} alt="Exact Preview" style="width: {{this.width}}px; height: {{this.height}}px; display: block;" />
-          </div>
-        </div>
-      </div>
-    </div>
-  {{/if}}
-
-  {{#if this.showOriginalFull}}
-    <div 
-      class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50"
-      {{on "click" this.handleCloseOriginalFull}}
-    >
-      <div class="relative max-w-full max-h-full p-4 overflow-auto">
-        <button
-          type="button"
-          {{on "click" this.handleCloseOriginalFull}}
-          class="absolute top-2 right-2 text-white text-3xl font-bold hover:text-gray-300 z-10 p-2"
-        >
-          &times;
-        </button>
-        {{#if this.fileInfo}}
-          <p class="text-white text-center text-sm mb-2">Original: {{this.fileInfo.width}} x {{this.fileInfo.height}}</p>
-        {{/if}}
-        <img src={{this.originalPreview}} alt="Original Full" class="max-w-full max-h-[80vh]" />
-      </div>
-    </div>
-  {{/if}}
     </div>
   </div>
 </div>
+
+{{#if this.showExactPreview}}
+  <div
+    class="fixed inset-0 z-50 overflow-auto"
+    style="background: rgba(0,0,0,0.9);"
+    {{on "click" this.handleCloseExactPreview}}
+  >
+    <div class="flex justify-center items-start min-h-screen p-8">
+      <div class="relative">
+        <button
+          type="button"
+          {{on "click" this.handleCloseExactPreview}}
+          class="absolute"
+          style="top: -8px; right: -8px; color: white; font-size: 30px; font-weight: bold; z-index: 50; background: black; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border: none; cursor: pointer; line-height: 1;"
+        >
+          &times;
+        </button>
+        <p style="color: white; text-align: center; font-size: 14px; margin-bottom: 8px;">{{this.width}} x {{this.height}} ({{this.convertedSize}})</p>
+        <div style="background: white; box-shadow: var(--shadow-card);">
+          <img src={{this.convertedPreview}} alt="Exact Preview" style="width: {{this.width}}px; height: {{this.height}}px; display: block;" />
+        </div>
+      </div>
+    </div>
+  </div>
+{{/if}}
+
+{{#if this.showOriginalFull}}
+  <div
+    class="fixed inset-0 flex items-center justify-center z-50"
+    style="background: rgba(0,0,0,0.9);"
+    {{on "click" this.handleCloseOriginalFull}}
+  >
+    <div class="relative max-w-full max-h-full p-4 overflow-auto">
+      <button
+        type="button"
+        {{on "click" this.handleCloseOriginalFull}}
+        class="absolute"
+        style="top: 8px; right: 8px; color: white; font-size: 30px; font-weight: bold; z-index: 10; padding: 8px; border: none; background: none; cursor: pointer; line-height: 1;"
+      >
+        &times;
+      </button>
+      {{#if this.fileInfo}}
+        <p style="color: white; text-align: center; font-size: 14px; margin-bottom: 8px;">Original: {{this.fileInfo.width}} x {{this.fileInfo.height}}</p>
+      {{/if}}
+      <img src={{this.originalPreview}} alt="Original Full" class="max-w-full" style="max-height: 80vh;" />
+    </div>
+  </div>
+{{/if}}

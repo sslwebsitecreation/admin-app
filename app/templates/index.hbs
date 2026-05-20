@@ -1,19 +1,46 @@
-<div class="card">
-  <h2 class="text-2xl font-bold mb-4">Dashboard</h2>
+{{#if @model.error}}
+  <div class="error-state">{{@model.error}}</div>
+{{/if}}
 
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-    <div class="bg-white rounded-xl shadow-sm p-6">
-      <h3 class="text-gray-500 text-sm uppercase tracking-wide">Total Products</h3>
-      <p class="text-4xl font-bold text-indigo-600">{{@model.products.length}}</p>
+{{#if @model.loading}}
+  <div class="grid gap-6">
+    <div class="skeleton skeleton-title" style="width: 300px; height: 40px;"></div>
+    <div class="grid grid-cols-2 gap-6">
+      <div class="skeleton skeleton-stat"></div>
+      <div class="skeleton skeleton-stat"></div>
     </div>
-    <div class="bg-white rounded-xl shadow-sm p-6">
-      <h3 class="text-gray-500 text-sm uppercase tracking-wide">YouTube Videos</h3>
-      <p class="text-4xl font-bold text-indigo-600">{{@model.youtube.length}}</p>
+  </div>
+{{else}}
+  <div class="welcome-section fade-in">
+    <div>
+      <h1 class="welcome-title">Welcome back! 👋</h1>
+      <p class="welcome-subtitle">Here's what's happening with your store.</p>
+    </div>
+    <a href="https://riyasrisilks.com" target="_blank" rel="noopener noreferrer" class="visit-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/>
+        <polyline points="15 3 21 3 21 9"/>
+        <line x1="10" y1="14" x2="21" y2="3"/>
+      </svg>
+      Visit Website
+    </a>
+  </div>
+
+  <div class="grid grid-cols-2 gap-6 mb-8">
+    <div class="fade-in slide-up stagger-1">
+      <StatCard @icon="products" @label="Total Products" @value={{@model.products.length}} />
+    </div>
+    <div class="fade-in slide-up stagger-2">
+      <StatCard @icon="videos" @label="Total YouTube Videos" @value={{@model.youtube.length}} />
     </div>
   </div>
 
-  <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
-    <LinkTo @route="products.new" class="btn-primary text-center">Add New Product</LinkTo>
-    <LinkTo @route="youtube.new" class="btn-primary text-center">Add YouTube Video</LinkTo>
+  <div class="grid grid-cols-2 gap-4">
+    <div class="fade-in slide-up stagger-3">
+      <ActionCard @icon="product" @title="Add Product" @route="products.new" />
+    </div>
+    <div class="fade-in slide-up stagger-4">
+      <ActionCard @icon="video" @title="Add YouTube Video" @route="youtube.new" />
+    </div>
   </div>
-</div>
+{{/if}}

@@ -1,10 +1,8 @@
-<div class="card max-w-2xl mx-auto">
-  <h2 class="text-2xl font-bold mb-6">{{if this.isEdit 'Edit' 'Add'}} YouTube Video</h2>
+<div class="form-card">
+  <h2>{{if this.isEdit 'Edit' 'Add'}} YouTube Video</h2>
 
   {{#if this.error}}
-    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-      {{this.error}}
-    </div>
+    <div class="error-state">{{this.error}}</div>
   {{/if}}
 
   <form {{on "submit" this.handleSubmit}} class="space-y-4">
@@ -19,15 +17,15 @@
       />
       {{#if this.rawInput}}
         {{#if this.videoIdValid}}
-          <p class="text-sm text-green-600 mt-1">Valid video ID: {{this.link}}</p>
+          <p class="text-sm mt-1" style="color: var(--green);">Valid video ID: {{this.link}}</p>
         {{else}}
-          <p class="text-sm text-red-600 mt-1">Invalid YouTube URL</p>
+          <p class="text-sm mt-1" style="color: var(--red);">Invalid YouTube URL</p>
         {{/if}}
       {{/if}}
     </div>
 
     {{#if this.previewUrl}}
-      <div class="aspect-video rounded-lg overflow-hidden bg-gray-100">
+      <div class="aspect-video rounded-lg overflow-hidden" style="background: var(--bg-main);">
         <iframe
           src={{this.previewUrl}}
           class="w-full h-full"
@@ -69,13 +67,13 @@
       />
     </div>
 
-    <div class="flex justify-between pt-4">
-      <button type="button" {{on "click" this.goBack}} class="btn-secondary">
+    <div class="form-actions">
+      <button type="button" {{on "click" this.goBack}} class="btn btn-secondary">
         Cancel
       </button>
       <button
         type="submit"
-        class="btn-primary"
+        class="btn btn-primary"
         disabled={{or this.isSaving (not this.isValid)}}
       >
         {{#if this.isSaving}}Saving...{{else}}{{if this.isEdit 'Update' 'Add'}} Video{{/if}}
