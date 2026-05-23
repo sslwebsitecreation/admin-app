@@ -7,6 +7,36 @@
 
   <form {{on "submit" this.handleSubmit}} class="space-y-4">
     <div>
+      <label class="form-label">Name *</label>
+      <input type="text" value={{this.name}} {{on "input" this.updateName}} class="form-input" required />
+    </div>
+
+    <div>
+      <label class="form-label">Category *</label>
+      <input type="text" value={{this.category}} {{on "input" this.updateCategory}} class="form-input" required />
+    </div>
+
+    <div class="grid grid-cols-3 gap-4">
+      <div>
+        <label class="form-label">Original Price *</label>
+        <input type="number" value={{this.originalPrice}} {{on "input" this.updatePrice}} class="form-input" required />
+      </div>
+      <div>
+        <label class="form-label">Discounted Price</label>
+        <input type="number" value={{this.discountedPrice}} {{on "input" this.updateDiscountedPrice}} class="form-input" />
+      </div>
+      <div>
+        <label class="form-label">Stock *</label>
+        <input type="number" value={{this.stockCount}} {{on "input" this.updateStock}} class="form-input" required />
+      </div>
+    </div>
+
+    <div>
+      <label class="form-label">Description</label>
+      <textarea value={{this.description}} {{on "input" this.updateDesc}} class="form-input" rows="3"></textarea>
+    </div>
+
+    <div>
       <label class="form-label">Product Images (1200x1600)</label>
 
       <div class="space-y-3 mb-4">
@@ -28,7 +58,7 @@
             </div>
 
             <div class="flex items-center gap-2">
-              <button type="button" {{on "click" this.chooseFile}} class="btn btn-sm btn-secondary">Choose</button>
+              <button type="button" data-choose-index={{idx}} {{on "click" this.chooseFile}} class="btn btn-sm btn-secondary">Choose</button>
             </div>
 
             <div class="flex items-center gap-2">
@@ -42,32 +72,6 @@
       </div>
 
       <button type="button" {{on "click" this.addImage}} class="btn btn-sm btn-primary">+ Add Image Row</button>
-    </div>
-
-    <div>
-      <label class="form-label">Name *</label>
-      <input type="text" value={{this.name}} {{on "input" this.updateName}} class="form-input" required />
-    </div>
-
-    <div>
-      <label class="form-label">Category *</label>
-      <input type="text" value={{this.category}} {{on "input" this.updateCategory}} class="form-input" required />
-    </div>
-
-    <div class="grid grid-cols-2 gap-4">
-      <div>
-        <label class="form-label">Price *</label>
-        <input type="number" value={{this.originalPrice}} {{on "input" this.updatePrice}} class="form-input" required />
-      </div>
-      <div>
-        <label class="form-label">Stock *</label>
-        <input type="number" value={{this.stockCount}} {{on "input" this.updateStock}} class="form-input" required />
-      </div>
-    </div>
-
-    <div>
-      <label class="form-label">Description</label>
-      <textarea value={{this.description}} {{on "input" this.updateDesc}} class="form-input" rows="3"></textarea>
     </div>
 
     <div class="form-actions">

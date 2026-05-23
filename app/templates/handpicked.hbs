@@ -5,12 +5,7 @@
 <div class="page-header">
   <div>
     <h1 class="page-title">Handpicked Sarees</h1>
-    <p class="text-secondary mt-1" style="font-size: 14px;">Max 5 — curated selection for featured display</p>
-  </div>
-  <div class="page-header-actions">
-    <button type="button" {{on "click" this.toggleEdit}} class="btn {{if this.isEditing 'btn-primary' 'btn-secondary'}}">
-      {{if this.isEditing "Done" "Edit"}}
-    </button>
+    <p class="mt-1" style="font-size: 14px; color: var(--text-secondary);">Max 5 — curated selection for featured display</p>
   </div>
 </div>
 
@@ -26,28 +21,10 @@
 {{else}}
   <div class="handpicked-grid">
     {{#each (repeat 5) as |_ idx|}}
-      <div class="handpicked-slot">
-        {{#if (get @model.handpicked idx)}}
-          {{#let (get @model.handpicked idx) as |product|}}
-            <div
-              class="product-card {{if this.isEditing 'cursor-grab' ''}}"
-              draggable={{if this.isEditing "true" "false"}}
-              {{on "dragstart" (fn this.dragStart idx)}}
-              {{on "dragover" this.dragOver}}
-              {{on "drop" (fn this.drop idx)}}
-              {{on "dragend" this.dragEnd}}
-            >
-              {{#if this.isEditing}}
-                <button
-                  type="button"
-                  class="handpicked-slot-remove"
-                  {{on "click" (fn this.removeFromHandpicked product.id)}}
-                  aria-label="Remove"
-                >
-                  &times;
-                </button>
-              {{/if}}
-
+      {{#if (get @model.handpicked idx)}}
+        {{#let (get @model.handpicked idx) as |product|}}
+          <div class="handpicked-slot">
+            <div class="product-card card-hover">
               <div>
                 {{#if product.images.length}}
                   <img
@@ -74,64 +51,11 @@
                 </div>
               </div>
             </div>
-          {{/let}}
-        {{else if this.isEditing}}
-          <div class="empty-slot" style="min-height: 160px;">
-            <div class="empty-slot-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="12" y1="5" x2="12" y2="19"/>
-                <line x1="5" y1="12" x2="19" y2="12"/>
-              </svg>
-            </div>
-            <span class="empty-slot-text">{{if this.canAddMore "Select from below" "No more available"}}</span>
           </div>
-        {{else}}
-          <EmptySlot />
-        {{/if}}
-      </div>
+        {{/let}}
+      {{else}}
+        <EmptySlot />
+      {{/if}}
     {{/each}}
   </div>
-
-  {{#if (and this.isEditing this.canAddMore)}}
-    <div class="card mt-8 fade-in">
-      <h3 class="section-title mb-1">Available Sarees</h3>
-      <p class="text-secondary mb-4" style="font-size: 14px;">Select a saree to add it to your handpicked collection.</p>
-      <div class="grid gap-3">
-        {{#each this.availableProducts as |product|}}
-          <div class="flex items-center justify-between p-4" style="background: var(--bg-main); border-radius: var(--radius-sm);">
-            <div class="flex items-center gap-3">
-              {{#if product.images.length}}
-                <img src={{image-url product.images.firstObject.key}} alt={{product.name}} class="thumbnail-sm" />
-              {{else}}
-                <div class="thumbnail-sm flex items-center justify-center" style="background: var(--border-light);"></div>
-              {{/if}}
-              <div>
-                <p class="font-semibold text-sm">{{product.name}}</p>
-                <p class="text-secondary text-xs">₹{{product.original_price}} — {{product.category}}</p>
-              </div>
-            </div>
-            <button
-              type="button"
-              class="btn btn-sm btn-primary"
-              {{on "click" (fn this.addToHandpicked product.id)}}
-            >
-              Add
-            </button>
-          </div>
-        {{/each}}
-      </div>
-    </div>
-  {{/if}}
-
-  {{#if (and this.isEditing (not this.canAddMore))}}
-    <div class="card mt-8 fade-in text-center" style="padding: 24px;">
-      <p class="text-secondary" style="font-size: 14px;">
-        {{#if this.handpicked.maxed}}
-          Maximum 5 handpicked sarees selected. Remove one to add another.
-        {{else}}
-          No more products available to add.
-        {{/if}}
-      </p>
-    </div>
-  {{/if}}
 {{/if}}

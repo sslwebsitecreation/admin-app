@@ -1,15 +1,9 @@
 <header class="top-header">
   <div class="top-header-inner">
-    <div class="top-header-logo">
-      <div class="top-header-logo-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-          <path d="M2 17l10 5 10-5"/>
-          <path d="M2 12l10 5 10-5"/>
-        </svg>
-      </div>
+    <button type="button" class="top-header-logo" {{on "click" this.goHome}}>
+      <img src="assets/logo.jpg" alt="" class="top-header-logo-img" />
       <span class="top-header-brand">Riya Sri Silks</span>
-    </div>
+    </button>
 
     <div class="top-header-center desktop-only">
       <div class="search-bar">
@@ -24,7 +18,7 @@
           class="search-bar-input"
           placeholder="Search products by name..."
           value={{this.query}}
-          {{on "input" this.handleSearch}}
+          {{on "keydown" this.handleSearchKeydown}}
         />
       </div>
     </div>
@@ -46,7 +40,7 @@
           class="search-bar-input"
           placeholder="Search products by name..."
           value={{this.query}}
-          {{on "input" this.handleSearch}}
+          {{on "keydown" this.handleSearchKeydown}}
         />
       </div>
     </div>

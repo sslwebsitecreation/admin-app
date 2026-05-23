@@ -16,6 +16,7 @@ export default class Product {
   description = '';
   category = '';
   original_price = 0;
+  discounted_price = 0;
   stock_count = 0;
   images = [];
   created_at = null;

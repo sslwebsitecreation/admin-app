@@ -31,32 +31,6 @@ export default class HandpickedService extends Service {
     await this.indexedDb.set(STORAGE_KEY, { ids: this.items });
   }
 
-  async setFromProducts(products) {
-    this.items = products
-      .filter(p => p.handpicked)
-      .sort((a, b) => (a.handpicked_order || 0) - (b.handpicked_order || 0))
-      .map(p => p.id);
-    await this.save();
-  }
-
-  async add(productId) {
-    if (this.items.length >= 5) return false;
-    if (this.items.includes(productId)) return false;
-    this.items = [...this.items, productId];
-    await this.save();
-    return true;
-  }
-
-  async remove(productId) {
-    this.items = this.items.filter(id => id !== productId);
-    await this.save();
-  }
-
-  async reorder(orderedIds) {
-    this.items = orderedIds;
-    await this.save();
-  }
-
   isHandpicked(productId) {
     return this.items.includes(productId);
   }
@@ -77,5 +51,29 @@ export default class HandpickedService extends Service {
     const map = {};
     allProducts.forEach(p => { map[p.id] = p; });
     return this.items.map(id => map[id]).filter(Boolean);
+  }
+
+  async updateList(newIds, dataService) {
+    this.items = newIds;
+    await this.save();
+    this._writeToDataService(dataService);
+  }
+
+  _writeToDataService(dataService) {
+    const allProducts = dataService.products || [];
+
+    allProducts.forEach(p => {
+      const idx = this.items.indexOf(p.id);
+      if (idx !== -1) {
+        p.handpicked = true;
+        p.handpicked_order = idx + 1;
+      } else {
+        p.handpicked = false;
+        p.handpicked_order = 0;
+      }
+    });
+
+    dataService.saveToIndexedDB();
+    dataService.products = [...allProducts];
   }
 }

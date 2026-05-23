@@ -19,7 +19,14 @@
   <div class="product-card-body">
     <p class="product-card-name">{{@product.name}}</p>
     <p class="product-card-category">{{@product.category}}</p>
-    <p class="product-card-price">₹{{@product.original_price}}</p>
+    <p class="product-card-price">
+      {{#if @product.discounted_price}}
+        <span class="original-price-line">₹{{@product.original_price}}</span>
+        <span class="text-primary">₹{{@product.discounted_price}}</span>
+      {{else}}
+        ₹{{@product.original_price}}
+      {{/if}}
+    </p>
     <div class="product-card-footer">
       <StockBadge @count={{@product.stock_count}} />
       <div class="product-card-actions">

@@ -4,9 +4,16 @@
 
 <PageHeader @title="All Products" @buttonText="Add Product" @buttonRoute="products.new" />
 
+{{#if this.search}}
+  <div class="search-banner">
+    <span>Showing results for "<strong>{{this.search}}</strong>"</span>
+    <button type="button" {{on "click" this.clearSearch}} class="search-banner-remove">× Remove</button>
+  </div>
+{{/if}}
+
 {{#if @model.loading}}
   <LoadingSkeleton @type="table" />
-{{else if @model.products}}
+{{else if this.searchedProducts.length}}
   {{!-- Desktop Table --}}
   <div class="table-container desktop-only fade-in">
     <div class="table-wrapper">
@@ -22,7 +29,7 @@
           </tr>
         </thead>
         <tbody>
-          {{#each @model.products as |product|}}
+          {{#each this.searchedProducts as |product|}}
             <tr>
               <td>
                 {{#if product.images.length}}
@@ -39,7 +46,14 @@
               </td>
               <td class="font-semibold">{{product.name}}</td>
               <td class="text-secondary">{{product.category}}</td>
-              <td class="font-semibold">₹{{product.original_price}}</td>
+              <td class="font-semibold">
+                {{#if product.discounted_price}}
+                  <span class="original-price-line">₹{{product.original_price}}</span>
+                  <span class="text-primary">₹{{product.discounted_price}}</span>
+                {{else}}
+                  ₹{{product.original_price}}
+                {{/if}}
+              </td>
               <td>
                 <StockBadge @count={{product.stock_count}} />
               </td>
@@ -68,9 +82,21 @@
 
   {{!-- Mobile Cards --}}
   <div class="mobile-only grid gap-4 fade-in">
-    {{#each @model.products as |product|}}
+    {{#each this.searchedProducts as |product|}}
       <ProductCard @product={{product}} @onDelete={{this.deleteProduct}} />
     {{/each}}
+  </div>
+{{else if @model.products.length}}
+  <div class="empty-state">
+    <div class="empty-state-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <circle cx="11" cy="11" r="8"/>
+        <path d="M21 21l-4.35-4.35"/>
+      </svg>
+    </div>
+    <h3 class="empty-state-title">No results for "{{this.search}}"</h3>
+    <p class="empty-state-text">Try a different product name or category.</p>
+    <button type="button" {{on "click" this.clearSearch}} class="btn btn-primary mt-6">Clear Search</button>
   </div>
 {{else}}
   <div class="empty-state">
