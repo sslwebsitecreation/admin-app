@@ -57,14 +57,28 @@
     </div>
 
     <div>
-      <label class="form-label">Product IDs (comma-separated)</label>
-      <input
-        type="text"
-        value={{this.productIds}}
-        {{on "input" this.handleProductIdsInput}}
-        class="form-input"
-        placeholder="1, 2, 3"
-      />
+      <label class="form-label">Products</label>
+      <div class="yt-products-area">
+        {{#if this.selectedProducts.length}}
+          <div class="yt-product-pills">
+            {{#each this.selectedProducts as |p|}}
+              <span class="yt-product-pill">{{p.name}}</span>
+            {{/each}}
+          </div>
+          <div class="yt-products-actions">
+            <button type="button" class="btn btn-secondary yt-choose-btn" {{on "click" this.openProductModal}}>
+              Edit Products
+            </button>
+            <button type="button" class="yt-clear-btn" {{on "click" this.clearSelection}}>
+              Clear All
+            </button>
+          </div>
+        {{else}}
+          <button type="button" class="btn btn-secondary yt-choose-btn" {{on "click" this.openProductModal}}>
+            Choose Products
+          </button>
+        {{/if}}
+      </div>
     </div>
 
     <div class="form-actions">
@@ -81,3 +95,71 @@
     </div>
   </form>
 </div>
+
+{{!-- Product Selection Modal --}}
+{{#if this.showProductModal}}
+  <div class="modal-overlay" {{on "click" this.closeProductModal}}>
+    <div class="modal-container" {{on "click" this.stopPropagation}}>
+      <div class="modal-header">
+        <h3>Select Products</h3>
+        <div class="modal-search-wrap">
+          <div class="search-bar search-bar--has-btn">
+            <input
+              type="text"
+              value={{this.productSearchInput}}
+              {{on "input" this.handleProductSearchInput}}
+              {{on "keydown" this.handleProductSearchKeydown}}
+              class="search-bar-input"
+              placeholder="Search products..."
+            />
+            <button type="button" class="search-bar-btn" {{on "click" this.applyProductSearch}} aria-label="Search">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12"/>
+                <polyline points="12 5 19 12 12 19"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-body modal-body--flush">
+        <div class="modal-product-list">
+          {{#each this.filteredProducts as |product|}}
+            <div class="modal-product-row" role="button" {{on "click" (fn this.toggleProduct product)}}>
+              <div class="modal-product-row-left">
+                <div class="modal-product-thumb-wrap">
+                  {{#if product.images.firstObject.key}}
+                    <img src={{image-url product.images.firstObject.key}} alt="" class="modal-product-thumb" />
+                  {{else}}
+                    <div class="modal-product-thumb modal-product-thumb--empty"></div>
+                  {{/if}}
+                </div>
+                <div class="product-name">{{product.name}}</div>
+              </div>
+              <div class="modal-product-row-right">
+                {{#if product.isSelected}}
+                  <span class="selected-check">&#10003;</span>
+                {{else}}
+                  <span class="unselected-circle"></span>
+                {{/if}}
+              </div>
+            </div>
+          {{else}}
+            <div class="text-sm" style="padding: 20px 0; text-align: center; color: var(--text-secondary);">
+              No products found
+            </div>
+          {{/each}}
+        </div>
+      </div>
+      <div class="modal-footer">
+        <div class="modal-footer-left">
+          {{#if this.selectedProductIds.length}}
+            <button type="button" class="yt-clear-btn" {{on "click" this.clearSelection}}>
+              Clear All
+            </button>
+          {{/if}}
+        </div>
+        <button type="button" {{on "click" this.closeProductModal}} class="btn btn-primary">Done</button>
+      </div>
+    </div>
+  </div>
+{{/if}}

@@ -49,8 +49,10 @@ export default class HandpickedService extends Service {
 
   getHandpickedProducts(allProducts) {
     const map = {};
-    allProducts.forEach(p => { map[p.id] = p; });
-    return this.items.map(id => map[id]).filter(Boolean);
+    let handpickedProducts = allProducts.filter(p => {
+      return p.tags?.includes('Handpicked');
+    });
+    return handpickedProducts;
   }
 
   async updateList(newIds, dataService) {

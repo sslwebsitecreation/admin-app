@@ -14,12 +14,27 @@ export default class TopHeaderComponent extends Component {
   }
 
   @action
+  handleQueryInput(event) {
+    this.query = event.target.value;
+  }
+
+  @action
   handleSearchKeydown(event) {
     if (event.key === 'Enter') {
-      const q = event.target.value.trim();
-      if (q) {
-        this.router.transitionTo('products', { queryParams: { search: q } });
-      }
+      event.preventDefault();
+      this.doSearch();
+    }
+  }
+
+  @action
+  handleSearchClick() {
+    this.doSearch();
+  }
+
+  doSearch() {
+    const q = this.query.trim();
+    if (q) {
+      this.router.transitionTo('products', { queryParams: { search: q } });
     }
   }
 }
