@@ -1,6 +1,7 @@
 export default class ProductImage {
   id = null;
   color = '';
+  color_name = '';
   key = '';
 
   static fromJson(json) {
