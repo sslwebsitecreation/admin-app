@@ -2,8 +2,36 @@ import Component from '@glimmer/component';
 import { inject as service } from '@ember/service';
 import { action } from '@ember/object';
 import { tracked } from '@glimmer/tracking';
+import { next } from '@ember/runloop';
 
-const CATEGORIES = [
+let _rowId = 1;
+
+class ImageRow {
+  rowKey = `r${_rowId++}`;
+  @tracked color = '';
+  @tracked colorInput = '';
+  @tracked colorName = '';
+  @tracked key = null;
+  @tracked file = null;
+  @tracked preview = null;
+  @tracked status = null;
+  @tracked showActions = true;
+  @tracked isConverting = false;
+  @tracked isUploading = false;
+  @tracked isFailed = false;
+  @tracked isDeleting = false;
+  @tracked colorError = '';
+}
+
+function applyStatus(row, status) {
+  row.status = status;
+  row.showActions = !(status === 'converting' || status === 'uploading');
+  row.isConverting = status === 'converting';
+  row.isUploading = status === 'uploading';
+  row.isFailed = status === 'failed';
+}
+
+let CATEGORIES = [
   'Soft Silk',
   'Bridal Collection',
   'Wedding Wear',
@@ -34,22 +62,25 @@ const TAG_SUGGESTIONS = [
 export default class ProductFormComponent extends Component {
   @service api;
   @service router;
+  @service data;
 
   @tracked name = '';
   @tracked category = '';
+  @tracked categorySearch = '';
+  @tracked showCategoryDropdown = false;
   @tracked originalPrice = '';
   @tracked discountedPrice = '';
   @tracked stockCount = '';
   @tracked description = '';
   @tracked images = [];
   @tracked tags = [];
-  @tracked tagInput = '';
-  @tracked showCategorySuggestions = false;
-  @tracked showTagSuggestions = false;
+  @tracked tagSearch = '';
+  @tracked showTagDropdown = false;
   @tracked isSaving = false;
   @tracked error = null;
   @tracked targetImageIndex = -1;
   @tracked modalData = null;
+  @tracked previewModalData = null;
 
   constructor() {
     super(...arguments);
@@ -63,57 +94,60 @@ export default class ProductFormComponent extends Component {
       this.description = p.description || '';
       this.tags = p.tags ? [...p.tags] : [];
       if (p.images) {
-        this.images = p.images.map(img => ({
-          ...img,
-          colorName: img.color_name || '',
-          preview: img.key,
-          status: 'uploaded',
-          file: null,
-          showActions: true,
-          isConverting: false,
-          isUploading: false,
-          isFailed: false,
-          colorError: '',
-          colorInput: img.color || '',
-        }));
+        this.images = p.images.map(src => {
+          const row = new ImageRow();
+          row.key = src.key;
+          row.color = src.color || '';
+          row.colorInput = src.color || '';
+          row.colorName = src.color_name || '';
+          row.preview = src.key;
+          row.status = 'uploaded';
+          return row;
+        });
       }
     } else {
-      this.images = [this.emptyRow()];
+      this.images = [new ImageRow()];
     }
   }
 
   emptyRow() {
-    return { color: '', colorInput: '', colorName: '', key: null, file: null, preview: null, status: null, showActions: true, isConverting: false, isUploading: false, isFailed: false, colorError: '' };
+    return new ImageRow();
   }
 
   get isEdit() { return !!this.args.product; }
-  get canRemoveImages() { return this.images.length > 1; }
+  get canRemoveImages() { return this.images.length > 1 && !this.images.some(i => i.isDeleting); }
   get isInvalid() { return !this.isValid; }
 
   get isValid() {
     if (!this.name || !this.category || !this.originalPrice || !this.stockCount) return false;
     if (this.images.length === 0) return false;
-    return this.images.every(img => img.status === 'uploaded' && img.key && img.color);
+    return this.images.every(row => row.status === 'uploaded' && row.key && row.color);
   }
 
   get filteredCategories() {
-    const q = (this.category || '').toLowerCase();
+    const q = (this.categorySearch || '').toLowerCase();
     if (!q) return CATEGORIES;
     return CATEGORIES.filter(c => c.toLowerCase().includes(q));
   }
 
-  get filteredTags() {
-    const q = (this.tagInput || '').toLowerCase();
-    const existing = new Set(this.tags.map(t => t.toLowerCase()));
-    if (!q) return TAG_SUGGESTIONS.filter(t => !existing.has(t.toLowerCase()));
-    return TAG_SUGGESTIONS.filter(t => t.toLowerCase().includes(q) && !existing.has(t.toLowerCase()));
+  get filteredTagItems() {
+    const q = (this.tagSearch || '').toLowerCase();
+    let items = TAG_SUGGESTIONS;
+    if (q) {
+      items = items.filter(t => t.toLowerCase().includes(q));
+    }
+    return items.map(t => ({ name: t, selected: this.tags.includes(t) }));
+  }
+
+  get visibleTags() {
+    return this.tags.slice(0, 2);
+  }
+
+  get remainingTagCount() {
+    return Math.max(0, this.tags.length - 2);
   }
 
   // --- helpers ---
-  withStatus(img, status) {
-    return { ...img, status, showActions: !(status === 'converting' || status === 'uploading'), isConverting: status === 'converting', isUploading: status === 'uploading', isFailed: status === 'failed' };
-  }
-
   isValidHex(str) {
     return /^#[0-9A-Fa-f]{6}$/.test(str);
   }
@@ -160,87 +194,182 @@ export default class ProductFormComponent extends Component {
     };
   }
 
+  extractColorFromImage(img) {
+    const canvas = document.createElement('canvas');
+    canvas.width = img.width;
+    canvas.height = img.height;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0);
+    const cx = Math.floor(img.width / 2);
+    const cy = Math.floor(img.height / 2);
+    const pixel = ctx.getImageData(cx, cy, 1, 1).data;
+    const r = pixel[0].toString(16).padStart(2, '0');
+    const g = pixel[1].toString(16).padStart(2, '0');
+    const b = pixel[2].toString(16).padStart(2, '0');
+    return `#${r}${g}${b}`.toUpperCase();
+  }
+
   // --- simple field actions ---
   @action updateName(e) { this.name = e.target.value; }
-  @action updateCategory(e) { this.category = e.target.value; this.showCategorySuggestions = true; }
   @action updatePrice(e) { this.originalPrice = e.target.value; }
   @action updateDiscountedPrice(e) { this.discountedPrice = e.target.value; }
   @action updateStock(e) { this.stockCount = e.target.value; }
   @action updateDesc(e) { this.description = e.target.value; }
 
-  // --- category autocomplete ---
-  @action handleCategoryInput(e) {
-    this.category = e.currentTarget.value;
-    this.showCategorySuggestions = true;
+  // --- category dropdown ---
+  @action toggleCategoryDropdown() {
+    this.showCategoryDropdown = !this.showCategoryDropdown;
+    if (this.showCategoryDropdown) {
+      this.categorySearch = '';
+    }
   }
 
-  @action handleCategoryFocus() {
-    this.showCategorySuggestions = true;
+  @action openCategoryDropdown() {
+    this.showCategoryDropdown = true;
+    this.categorySearch = '';
   }
 
-  @action handleCategoryBlur() {
-    setTimeout(() => { this.showCategorySuggestions = false; }, 150);
+  @action closeCategoryDropdown() {
+    this.showCategoryDropdown = false;
+    this.categorySearch = '';
+  }
+
+  @action handleDropdownFocusOut(e) {
+    if (!e.currentTarget.contains(e.relatedTarget)) {
+      next(this, () => {
+        this.showCategoryDropdown = false;
+        this.categorySearch = '';
+      });
+    }
+  }
+
+  @action handleCategorySearch(e) {
+    this.categorySearch = e.currentTarget.value;
+  }
+
+  @action handleCategoryKeydown(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const val = (this.categorySearch || '').trim();
+      if (val) {
+        this.setCategory(val);
+      }
+    }
+    if (e.key === 'Escape') {
+      this.closeCategoryDropdown();
+    }
   }
 
   @action selectCategory(cat) {
-    this.category = cat;
-    this.showCategorySuggestions = false;
+    this.setCategory(cat);
   }
 
-  // --- tags ---
-  @action handleTagInput(e) {
-    this.tagInput = e.currentTarget.value;
-    this.showTagSuggestions = true;
+  @action addCustomCategory() {
+    const val = (this.categorySearch || '').trim();
+    if (val) {
+      this.setCategory(val);
+      if (!CATEGORIES.includes(val)) {
+        CATEGORIES.push(val);
+      }
+    }
+  }
+
+  setCategory(val) {
+    this.category = val;
+    this.categorySearch = '';
+    this.showCategoryDropdown = false;
+  }
+
+  @action clearCategory(e) {
+    e.stopPropagation();
+    this.category = '';
+    this.categorySearch = '';
+  }
+
+  // --- tags multi dropdown ---
+  @action toggleTagDropdown() {
+    this.showTagDropdown = !this.showTagDropdown;
+    if (this.showTagDropdown) {
+      this.tagSearch = '';
+    }
+  }
+
+  @action handleTagFocusOut(e) {
+    if (!e.currentTarget.contains(e.relatedTarget)) {
+      next(this, () => {
+        this.showTagDropdown = false;
+        this.tagSearch = '';
+      });
+    }
+  }
+
+  @action handleTagSearch(e) {
+    this.tagSearch = e.currentTarget.value;
   }
 
   @action handleTagKeydown(e) {
     if (e.key === 'Enter' || e.key === ',') {
       e.preventDefault();
-      const val = (this.tagInput || '').trim();
+      const val = (this.tagSearch || '').trim();
       if (val && !this.tags.includes(val)) {
         this.tags = [...this.tags, val];
       }
-      this.tagInput = '';
-      this.showTagSuggestions = false;
+      this.tagSearch = '';
     }
-    if (e.key === 'Backspace' && !this.tagInput && this.tags.length) {
-      this.tags = this.tags.slice(0, -1);
+    if (e.key === 'Escape') {
+      this.showTagDropdown = false;
+      this.tagSearch = '';
     }
   }
 
-  @action handleTagBlur() {
-    setTimeout(() => { this.showTagSuggestions = false; }, 150);
-    const val = (this.tagInput || '').trim();
-    if (val && !this.tags.includes(val)) {
-      this.tags = [...this.tags, val];
-    }
-    this.tagInput = '';
-  }
-
-  @action addTag(tag) {
-    if (!this.tags.includes(tag)) {
+  @action addTagSuggestion(tag) {
+    if (this.tags.includes(tag)) {
+      this.tags = this.tags.filter(t => t !== tag);
+    } else {
       this.tags = [...this.tags, tag];
     }
-    this.tagInput = '';
-    this.showTagSuggestions = false;
+    this.tagSearch = '';
+  }
+
+  @action addCustomTag() {
+    const val = (this.tagSearch || '').trim();
+    if (val && !this.tags.includes(val)) {
+      this.tags = [...this.tags, val];
+      if (!TAG_SUGGESTIONS.includes(val)) {
+        TAG_SUGGESTIONS.push(val);
+      }
+    }
+    this.tagSearch = '';
   }
 
   @action removeTag(tag) {
     this.tags = this.tags.filter(t => t !== tag);
   }
 
-  @action focusTagInput(e) {
-    const input = e.currentTarget.querySelector('.pc-tag-input');
-    if (input) input.focus();
+  @action clearTags(e) {
+    e.stopPropagation();
+    this.tags = [];
+    this.tagSearch = '';
   }
 
   // --- images / variants ---
   @action addImage() {
-    this.images = [...this.images, this.emptyRow()];
+    this.images = [...this.images, new ImageRow()];
   }
 
-  @action removeImage(e) {
+  @action async removeImage(e) {
     const idx = parseInt(e.currentTarget.dataset.removeIndex, 10);
+    const row = this.images[idx];
+    if (!row || row.isDeleting) return;
+
+    row.isDeleting = true;
+
+    if (row.key) {
+      try {
+        await this.api.deleteImage(row.key);
+      } catch (_) { }
+    }
+
     this.images = this.images.filter((_, i) => i !== idx);
   }
 
@@ -249,40 +378,60 @@ export default class ProductFormComponent extends Component {
     document.getElementById('file-input').click();
   }
 
-  @action removeVariantImage(idx, e) {
-    if (e && e.stopPropagation) e.stopPropagation();
-    this.images = this.images.map((img, i) => i === idx ? this.emptyRow() : img);
+  @action handleUploadBoxClick(e) {
+    const idx = parseInt(e.currentTarget.dataset.variantIdx, 10);
+    const row = this.images[idx];
+    if (!row || row.isConverting || row.isUploading) return;
+    if (row.preview) {
+      this.showPreviewImage(row.key);
+    } else {
+      this.chooseVariantImage(idx);
+    }
   }
 
   @action handleColorPicked(e) {
     const idx = parseInt(e.currentTarget.dataset.colorIndex, 10);
     const val = e.currentTarget.value;
-    this.images = this.images.map((img, i) => i === idx ? { ...img, color: val, colorInput: val, colorError: '' } : img);
+    const row = this.images[idx];
+    if (!row) return;
+    row.color = val;
+    row.colorInput = val;
+    row.colorError = '';
   }
 
   @action handleColorInput(e) {
     const idx = parseInt(e.currentTarget.dataset.colorIndex, 10);
-    this.images = this.images.map((img, i) => i === idx ? { ...img, colorInput: e.currentTarget.value, colorError: '' } : img);
+    const row = this.images[idx];
+    if (!row) return;
+    row.colorInput = e.currentTarget.value;
+    row.colorError = '';
   }
 
   @action handleColorBlur(e) {
     const idx = parseInt(e.currentTarget.dataset.colorIndex, 10);
+    const row = this.images[idx];
+    if (!row) return;
     const val = (e.currentTarget.value || '').trim();
     if (!val) {
-      this.images = this.images.map((im, i) => i === idx ? { ...im, color: '', colorInput: '', colorError: '' } : im);
+      row.color = '';
+      row.colorInput = '';
+      row.colorError = '';
       return;
     }
     if (!this.isValidHex(val)) {
-      this.images = this.images.map((im, i) => i === idx ? { ...im, colorError: `Invalid hex color: ${val}` } : im);
+      row.colorError = `Invalid hex color: ${val}`;
       return;
     }
-    this.images = this.images.map((im, i) => i === idx ? { ...im, color: val, colorInput: val, colorError: '' } : im);
+    row.color = val;
+    row.colorInput = val;
+    row.colorError = '';
   }
 
   @action handleColorNameInput(e) {
     const idx = parseInt(e.currentTarget.dataset.colorNameIndex, 10);
-    const colorName = e.currentTarget.value;
-    this.images = this.images.map((img, i) => i === idx ? { ...img, colorName } : img);
+    const row = this.images[idx];
+    if (!row) return;
+    row.colorName = e.currentTarget.value;
   }
 
   @action async filePicked(e) {
@@ -297,10 +446,11 @@ export default class ProductFormComponent extends Component {
 
     const idx = this.targetImageIndex >= 0 ? this.targetImageIndex : this.images.length - 1;
     const previewUrl = URL.createObjectURL(file);
+    const row = this.images[idx];
+    if (!row) return;
 
-    this.images = this.images.map((img, i) =>
-      i === idx ? { ...img, preview: previewUrl, ...this.withStatus(img, 'converting') } : img
-    );
+    row.preview = previewUrl;
+    applyStatus(row, 'converting');
     this.error = null;
 
     try {
@@ -310,6 +460,14 @@ export default class ProductFormComponent extends Component {
       const cs = result.convertedSize;
       const cr = os && cs ? ((os - cs) / os * 100).toFixed(1) : '';
       const fmt = (b) => { if (!b) return ''; if (b < 1024) return b + ' B'; if (b < 1048576) return (b / 1024).toFixed(0) + ' KB'; return (b / 1048576).toFixed(1) + ' MB'; };
+
+      const loadedImg = new Image();
+      loadedImg.src = previewUrl;
+      await new Promise(r => { loadedImg.onload = r; });
+      const autoColor = this.extractColorFromImage(loadedImg);
+
+      row.colorInput = autoColor;
+      row.color = autoColor;
 
       this.modalData = {
         targetIndex: idx,
@@ -326,49 +484,56 @@ export default class ProductFormComponent extends Component {
         webpBlob: result.blob,
       };
     } catch (err) {
-      this.images = this.images.map((img, i) =>
-        i === idx ? { ...img, ...this.withStatus(img, 'failed') } : img
-      );
+      applyStatus(row, 'failed');
       this.error = err.message || 'Image conversion failed';
     }
   }
 
-  @action async acceptImage() {
+  @action acceptImage() {
     if (!this.modalData) return;
-    const { targetIndex, webpBlob, convertedPreviewUrl } = this.modalData;
-
+    const { targetIndex, webpBlob } = this.modalData;
     const webpFile = new File([webpBlob], 'image.webp', { type: 'image/webp' });
+    const row = this.images[targetIndex];
+    if (!row) return;
+    applyStatus(row, 'uploading');
+    this.doUpload(targetIndex, webpFile);
+  }
 
-    this.images = this.images.map((img, i) =>
-      i === targetIndex ? { ...img, ...this.withStatus(img, 'uploading') } : img
-    );
-
+  async doUpload(targetIndex, webpFile) {
+    const row = this.images[targetIndex];
+    if (!row) return;
     try {
       const result = await this.api.uploadImage(webpFile, 1200, 1600);
       const status = result.data?.key ? 'uploaded' : 'failed';
-      this.images = this.images.map((img, i) =>
-        i === targetIndex
-          ? { ...img, key: result.data?.key || '', preview: convertedPreviewUrl, ...this.withStatus(img, status) }
-          : img
-      );
+      applyStatus(row, status);
+      row.key = result.data?.key || '';
+      row.preview = result.data?.url;
     } catch (err) {
-      this.images = this.images.map((img, i) =>
-        i === targetIndex ? { ...img, ...this.withStatus(img, 'failed') } : img
-      );
+      applyStatus(row, 'failed');
     }
+    next(() => {
+      this.modalData = null;
+      this.error = null;
+    });
+  }
 
+  // --- modal actions ---
+  @action cancelImage() {
+    if (!this.modalData) return;
+    const idx = this.modalData.targetIndex;
+    this.images = this.images.map((row, i) =>
+      i === idx ? new ImageRow() : row
+    );
     this.modalData = null;
     this.error = null;
   }
 
-  @action cancelImage() {
-    if (!this.modalData) return;
-    const idx = this.modalData.targetIndex;
-    this.images = this.images.map((img, i) =>
-      i === idx ? this.emptyRow() : img
-    );
-    this.modalData = null;
-    this.error = null;
+  @action showPreviewImage(key) {
+    this.previewModalData = { key };
+  }
+
+  @action closePreviewModal() {
+    this.previewModalData = null;
   }
 
   @action stopPropagation(e) { e.stopPropagation(); }
@@ -388,13 +553,31 @@ export default class ProductFormComponent extends Component {
         discounted_price: this.discountedPrice ? parseFloat(this.discountedPrice) : null,
         stock_count: parseInt(this.stockCount),
         description: this.description,
-        images: this.images.map(i => ({ color: i.color, color_name: i.colorName, image_link: i.key })),
+        images: this.images.map(r => ({ color: r.color, color_name: r.colorName, image_link: r.key })),
       };
       const result = this.isEdit
         ? await this.api.updateProduct({ ...payload, id: this.args.product.id })
         : await this.api.createProduct(payload);
-      if (result.success) this.router.transitionTo('products');
-      else this.error = result.message || 'Failed';
+      if (result.success) {
+        if (this.isEdit) {
+          this.data.products = this.data.products.map(p =>
+            p.id === this.args.product.id ? { ...p, ...payload } : p
+          );
+        } else {
+          this.data.products = [...this.data.products, {
+            id: result.data?.product_id || Date.now(),
+            ...payload,
+            images: this.images.map(r => ({
+              color: r.color,
+              color_name: r.colorName,
+              key: r.key,
+            })),
+            created_at: new Date().toISOString(),
+          }];
+        }
+        await this.data.saveToIndexedDB();
+        this.router.transitionTo('products');
+      } else this.error = result.message || 'Failed';
     } catch (err) {
       this.error = err.message;
     }

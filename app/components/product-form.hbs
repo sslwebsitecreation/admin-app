@@ -37,74 +37,120 @@
         {{!-- Category --}}
         <div class="pc-card-section">
           <label class="pc-label" for="pc-category">Category</label>
-          <div class="pc-dropdown-wrap">
-            <div class="pc-input-group">
-              <span class="pc-input-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="11" cy="11" r="8"/>
-                  <path d="M21 21l-4.35-4.35"/>
-                </svg>
+          <div class="pc-dropdown-wrap" tabindex="-1" {{on "focusout" this.handleDropdownFocusOut}}>
+            <button type="button" class="pc-select-trigger" {{on "click" this.toggleCategoryDropdown}} id="pc-category">
+              <span class="pc-select-value {{if this.category 'pc-select-value--chosen' 'pc-select-value--placeholder'}}">
+                {{if this.category this.category "Select category"}}
               </span>
-              <input
-                id="pc-category"
-                type="text"
-                value={{this.category}}
-                {{on "input" this.handleCategoryInput}}
-                {{on "blur" this.handleCategoryBlur}}
-                {{on "focus" this.handleCategoryFocus}}
-                class="pc-input"
-                placeholder="Search categories..."
-                autocomplete="off"
-                required
-              />
-            </div>
-            {{#if this.showCategorySuggestions}}
+              {{#if this.category}}
+                <button type="button" class="pc-select-clear" {{on "mousedown" this.clearCategory}}>&times;</button>
+              {{/if}}
+              <svg class="pc-chevron {{if this.showCategoryDropdown 'pc-chevron--open'}}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </button>
+
+            {{#if this.showCategoryDropdown}}
               <div class="pc-dropdown">
-                {{#each this.filteredCategories as |cat|}}
-                  <div
-                    class="pc-dropdown-item"
-                    role="button"
-                    {{on "mousedown" (fn this.selectCategory cat)}}
-                  >{{cat}}</div>
-                {{else}}
-                  <div class="pc-dropdown-item">No matches</div>
-                {{/each}}
+                <div class="pc-dropdown-search">
+                  <svg class="pc-dropdown-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"/>
+                    <path d="M21 21l-4.35-4.35"/>
+                  </svg>
+                  <input
+                    type="text"
+                    class="pc-dropdown-search-input"
+                    value={{this.categorySearch}}
+                    {{on "input" this.handleCategorySearch}}
+                    {{on "keydown" this.handleCategoryKeydown}}
+                    placeholder="Search categories..."
+                    autocomplete="off"
+                  />
+                </div>
+                <div class="pc-dropdown-list">
+                  {{#each this.filteredCategories as |cat|}}
+                    <div
+                      class="pc-dropdown-item {{if (eq cat this.category) 'pc-dropdown-item--selected'}}"
+                      role="button"
+                      {{on "mousedown" (fn this.selectCategory cat)}}
+                    >{{cat}}</div>
+                  {{else}}
+                    <div class="pc-dropdown-item pc-dropdown-item--add" role="button" {{on "mousedown" this.addCustomCategory}}>
+                      + Add "{{this.categorySearch}}"
+                    </div>
+                  {{/each}}
+                </div>
               </div>
             {{/if}}
+            <input type="hidden" value={{this.category}} required />
           </div>
         </div>
 
         {{!-- Tags --}}
         <div class="pc-card-section">
           <label class="pc-label">Tags</label>
-          <div class="pc-dropdown-wrap">
-            <div class="pc-tags-wrap" {{on "click" this.focusTagInput}}>
-              {{#each this.tags as |tag|}}
-                <span class="pc-tag">
-                  {{tag}}
-                  <button type="button" class="pc-tag-remove" {{on "click" (fn this.removeTag tag)}}>&times;</button>
+          <div class="pc-dropdown-wrap" tabindex="-1" {{on "focusout" this.handleTagFocusOut}}>
+            <button type="button" class="pc-select-trigger" {{on "click" this.toggleTagDropdown}}>
+              {{#if this.tags.length}}
+                <span class="pc-select-trigger-pills">
+                  {{#each this.visibleTags as |tag|}}
+                    <span class="pc-tag pc-tag--in-trigger">
+                      {{tag}}
+                      <button type="button" class="pc-tag-remove" {{on "mousedown" (fn this.removeTag tag)}}>&times;</button>
+                    </span>
+                  {{/each}}
+                  {{#if this.remainingTagCount}}
+                    <span class="pc-tag pc-tag--overflow">+{{this.remainingTagCount}}</span>
+                  {{/if}}
                 </span>
-              {{/each}}
-              <input
-                type="text"
-                class="pc-tag-input"
-                value={{this.tagInput}}
-                {{on "input" this.handleTagInput}}
-                {{on "keydown" this.handleTagKeydown}}
-                {{on "blur" this.handleTagBlur}}
-                placeholder="Type to add tags..."
-                autocomplete="off"
-              />
-            </div>
-            {{#if this.showTagSuggestions}}
-              <div class="pc-tag-suggestions">
-                {{#each this.filteredTags as |tag|}}
-                  <div
-                    class="pc-tag-suggestion"
-                    role="button"
-                    {{on "mousedown" (fn this.addTag tag)}}
-                  >{{tag}}</div>
-                {{/each}}
+              {{else}}
+                <span class="pc-select-value pc-select-value--placeholder">Select tags</span>
+              {{/if}}
+              {{#if this.tags.length}}
+                <button type="button" class="pc-select-clear" {{on "mousedown" this.clearTags}}>&times;</button>
+              {{/if}}
+              <svg class="pc-chevron {{if this.showTagDropdown 'pc-chevron--open'}}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </button>
+
+            {{#if this.showTagDropdown}}
+              <div class="pc-dropdown">
+                <div class="pc-dropdown-search">
+                  <svg class="pc-dropdown-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"/>
+                    <path d="M21 21l-4.35-4.35"/>
+                  </svg>
+                  <input
+                    type="text"
+                    class="pc-dropdown-search-input"
+                    value={{this.tagSearch}}
+                    {{on "input" this.handleTagSearch}}
+                    {{on "keydown" this.handleTagKeydown}}
+                    placeholder="Search or add tags..."
+                    autocomplete="off"
+                  />
+                </div>
+                <div class="pc-dropdown-list">
+                  {{#each this.filteredTagItems as |item|}}
+                    <div
+                      class="pc-dropdown-item {{if item.selected 'pc-dropdown-item--selected'}}"
+                      role="button"
+                      {{on "mousedown" (fn this.addTagSuggestion item.name)}}
+                    >
+                      <span class="pc-dropdown-item-label">{{item.name}}</span>
+                      {{#if item.selected}}
+                        <svg class="pc-dropdown-item-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                          <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                      {{/if}}
+                    </div>
+                  {{else}}
+                    <div class="pc-dropdown-item pc-dropdown-item--add" role="button" {{on "mousedown" this.addCustomTag}}>
+                      + Add "{{this.tagSearch}}"
+                    </div>
+                  {{/each}}
+                </div>
               </div>
             {{/if}}
           </div>
@@ -187,32 +233,46 @@
             </button>
           </div>
 
-          {{#each this.images as |img idx|}}
-            <div class="pc-variant-card">
+          {{#each this.images as |row idx|}}
+            <div class="pc-variant-card {{if row.isDeleting 'pc-variant-card--deleting'}}">
               {{#if this.canRemoveImages}}
                 <button type="button" data-remove-index={{idx}} {{on "click" this.removeImage}} class="pc-variant-remove" aria-label="Remove variant">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="3 6 5 6 21 6"/>
-                    <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
-                  </svg>
+                  {{#if row.isDeleting}}
+                    <span class="pc-spinner-xs"></span>
+                  {{else}}
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="3 6 5 6 21 6"/>
+                      <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+                    </svg>
+                  {{/if}}
                 </button>
               {{/if}}
 
               <div class="pc-variant-row">
-                {{!-- Image Upload --}}
-                <div class="pc-upload-box {{if img.preview 'pc-upload-box--has-image'}}" role="button" {{on "click" (fn this.chooseVariantImage idx)}}>
-                  {{#if img.preview}}
-                    <img src={{img.preview}} alt="Variant" />
-                    <button type="button" class="pc-upload-remove" {{on "click" (fn this.removeVariantImage idx)}}>&times;</button>
-                  {{else if img.isConverting}}
+                {{!-- Image Upload / Preview --}}
+                <div class="pc-upload-box {{if row.preview 'pc-upload-box--has-image'}} {{if row.isConverting 'pc-upload-box--converting'}}" 
+                     data-variant-idx={{idx}}
+                     {{on "click" this.handleUploadBoxClick}}>
+                  {{#if row.isConverting}}
                     <span class="spinner"></span>
+                    <span class="pc-upload-text">Optimizing...</span>
                   {{else}}
-                    <svg class="pc-upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
-                      <polyline points="17 8 12 3 7 8"/>
-                      <line x1="12" y1="3" x2="12" y2="15"/>
-                    </svg>
-                    <span class="pc-upload-text">Upload Image</span>
+                    {{#if row.preview}}
+                      <img src={{row.preview}} />
+                      <div class="pc-upload-overlay">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                          <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                      </div>
+                    {{else}}
+                      <svg class="pc-upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                        <polyline points="17 8 12 3 7 8"/>
+                        <line x1="12" y1="3" x2="12" y2="15"/>
+                      </svg>
+                      <span class="pc-upload-text">Upload Image</span>
+                    {{/if}}
                   {{/if}}
                 </div>
 
@@ -224,7 +284,7 @@
                     <div class="pc-color-row">
                       <input
                         type="color"
-                        value={{if img.color img.color "#F97316"}}
+                        value={{if row.color row.color "#F97316"}}
                         data-color-index={{idx}}
                         {{on "input" this.handleColorPicked}}
                         class="pc-color-picker"
@@ -233,7 +293,7 @@
                       <div class="pc-color-hex">
                         <input
                           type="text"
-                          value={{img.colorInput}}
+                          value={{row.colorInput}}
                           data-color-index={{idx}}
                           {{on "input" this.handleColorInput}}
                           {{on "blur" this.handleColorBlur}}
@@ -242,19 +302,19 @@
                           maxlength="7"
                         />
                       </div>
-                      {{#if img.colorError}}
-                        <span class="pc-error">{{img.colorError}}</span>
+                      {{#if row.colorError}}
+                        <span class="pc-error">{{row.colorError}}</span>
                       {{/if}}
                     </div>
                   </div>
 
-                  {{!-- Variant Name --}}
+                  {{!-- Variant Name (at end) --}}
                   <div class="pc-variant-name-input">
                     <label class="pc-label" for="pc-vname-{{idx}}">Variant Name</label>
                     <input
                       id="pc-vname-{{idx}}"
                       type="text"
-                      value={{img.colorName}}
+                      value={{row.colorName}}
                       data-color-name-index={{idx}}
                       {{on "input" this.handleColorNameInput}}
                       class="pc-input"
@@ -287,7 +347,8 @@
 {{! --- Upload Preview Modal --- }}
 {{#if this.modalData}}
   <div class="modal-overlay" {{on "click" this.cancelImage}}>
-    <div class="modal-content upload-modal" {{on "click" this.stopPropagation}}>
+    <div class="modal-content upload-modal upload-modal--big" {{on "click" this.stopPropagation}}>
+      <button type="button" class="modal-close-btn" {{on "click" this.cancelImage}}>&times;</button>
       <div class="modal-body">
         <div class="modal-preview-side">
           <h4 class="modal-preview-label">Converted WebP</h4>
@@ -329,6 +390,18 @@
             <button type="button" {{on "click" this.acceptImage}} class="btn btn-primary">Continue</button>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+{{/if}}
+
+{{! --- Image Preview Modal --- }}
+{{#if this.previewModalData}}
+  <div class="modal-overlay" {{on "click" this.closePreviewModal}}>
+    <div class="modal-content preview-image-modal" {{on "click" this.stopPropagation}}>
+      <button type="button" class="modal-close-btn" {{on "click" this.closePreviewModal}}>&times;</button>
+      <div class="preview-image-wrap">
+        <img src={{image-url this.previewModalData.key}} alt="Full preview" />
       </div>
     </div>
   </div>
