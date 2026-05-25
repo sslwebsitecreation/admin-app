@@ -4,7 +4,7 @@ module.exports = function (environment) {
   let ENV = {
     modulePrefix: 'admin-app',
     environment,
-    rootURL: '/admin-app/',
+    rootURL: '/',
     locationType: 'hash',
     EmberENV: {
       FEATURES: {
@@ -23,7 +23,7 @@ module.exports = function (environment) {
 
   if (environment === 'development') {
     ENV['ember-cli-mirage'] = {
-      enabled: true
+      enabled: false
     };
   }
 
