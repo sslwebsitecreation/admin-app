@@ -16,7 +16,7 @@
       <h1 class="welcome-title">Welcome back! 👋</h1>
       <p class="welcome-subtitle">Here's what's happening with your store.</p>
     </div>
-    <a href="https://riyasrisilks.com" target="_blank" rel="noopener noreferrer" class="visit-btn">
+    <a href="https://riyasrisilks.in" target="_blank" rel="noopener noreferrer" class="visit-btn">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/>
         <polyline points="15 3 21 3 21 9"/>
@@ -28,10 +28,10 @@
 
   <div class="grid grid-cols-2 gap-6 mb-8">
     <div class="fade-in slide-up stagger-1">
-      <StatCard @icon="products" @label="Total Products" @value={{@model.products.length}} />
+      <StatCard @icon="products" @label="Total Products" @value={{this.data.products.length}} />
     </div>
     <div class="fade-in slide-up stagger-2">
-      <StatCard @icon="videos" @label="Total YouTube Videos" @value={{@model.youtube.length}} />
+      <StatCard @icon="videos" @label="Total YouTube Videos" @value={{this.data.youtubeVideos.length}} />
     </div>
   </div>
 
@@ -44,51 +44,66 @@
     </div>
   </div>
 
-  <div class="mobile-only mobile-actions">
-    <button
-      type="button"
-      {{on "click" this.handleSync}}
-      disabled={{or this.data.isLoading (not this.canShowSync)}}
-      class="action-card"
-    >
-      <div class="action-card-icon">
+  <div class="mobile-only mobile-actions-section fade-in">
+    <div class="mobile-actions-card">
+      <div class="mobile-actions-header">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0118.8-4.3M22 12.5a10 10 0 01-18.8 4.2"/>
+        </svg>
+        <span>Data Management</span>
+      </div>
+
+      <button
+        type="button"
+        {{on "click" this.handleSync}}
+        disabled={{or this.data.isLoading (not this.canShowSync)}}
+        class="mobile-action-btn"
+      >
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="23 4 23 10 17 10"/>
           <polyline points="1 20 1 14 7 14"/>
           <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
         </svg>
-      </div>
-      <span class="action-card-title">
-        {{if this.data.isLoading "Syncing..." "Sync Data"}}
-      </span>
-    </button>
-    <button
-      type="button"
-      {{on "click" this.handleClearCache}}
-      disabled={{not this.canShowClearCache}}
-      class="action-card"
-    >
-      <div class="action-card-icon">
+        {{#if this.data.isLoading}}
+          Syncing...
+        {{else}}
+          Sync Data
+        {{/if}}
+        <span class="mobile-action-remain">({{this.remainingSyncCount}} left)</span>
+      </button>
+
+      {{#if this.data.lastSyncedAt}}
+        <div class="mobile-sync-info">
+          Last synced: {{this.data.lastSyncedAt}}
+        </div>
+      {{/if}}
+
+      <button
+        type="button"
+        {{on "click" this.handleClearCache}}
+        disabled={{not this.canShowClearCache}}
+        class="mobile-action-btn"
+      >
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="3 6 5 6 21 6"/>
           <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
         </svg>
-      </div>
-      <span class="action-card-title">Clear Cache</span>
-    </button>
-    <button
-      type="button"
-      class="action-card"
-      onclick="window.location.href='/'"
-    >
-      <div class="action-card-icon">
+        Clear Cache
+        <span class="mobile-action-remain">({{this.remainingClearCount}} left)</span>
+      </button>
+
+      <button
+        type="button"
+        {{on "click" this.handleLogout}}
+        class="mobile-action-btn mobile-action-logout"
+      >
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
           <polyline points="16 17 21 12 16 7"/>
           <line x1="21" y1="12" x2="9" y2="12"/>
         </svg>
-      </div>
-      <span class="action-card-title">Logout</span>
-    </button>
+        Logout
+      </button>
+    </div>
   </div>
 {{/if}}

@@ -10,7 +10,7 @@
     <LoadingSkeleton @type="card" />
     <LoadingSkeleton @type="card" />
   </div>
-{{else if @model.videos}}
+{{else if this.data.youtubeVideos.length}}
   {{!-- Desktop Table --}}
   <div class="table-container desktop-only fade-in">
     <div class="table-wrapper">
@@ -25,7 +25,7 @@
           </tr>
         </thead>
         <tbody>
-          {{#each @model.videos as |video idx|}}
+          {{#each this.data.youtubeVideos as |video idx|}}
             <tr>
               <td class="text-secondary">{{add idx 1}}</td>
               <td>
@@ -79,7 +79,7 @@
 
   {{!-- Mobile Cards --}}
   <div class="mobile-only grid gap-4 fade-in">
-    {{#each @model.videos as |video|}}
+    {{#each this.data.youtubeVideos as |video|}}
       <VideoCard @video={{video}} @onDelete={{this.deleteVideo}} />
     {{/each}}
   </div>

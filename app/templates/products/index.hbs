@@ -86,7 +86,7 @@
       <ProductCard @product={{product}} @onDelete={{this.deleteProduct}} />
     {{/each}}
   </div>
-{{else if @model.products.length}}
+{{else if this.data.products.length}}
   <div class="empty-state">
     <div class="empty-state-icon">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">

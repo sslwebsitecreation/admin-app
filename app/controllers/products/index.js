@@ -5,6 +5,7 @@ import { tracked } from '@glimmer/tracking';
 
 export default class ProductsIndexController extends Controller {
   @service api;
+  @service data;
 
   queryParams = ['search'];
 
@@ -12,7 +13,7 @@ export default class ProductsIndexController extends Controller {
   @tracked isDeleting = false;
 
   get searchedProducts() {
-    const products = this.model.products || [];
+    const products = this.data.products || [];
     if (!this.search) return products;
     const q = this.search.toLowerCase();
     return products.filter(p =>
@@ -33,7 +34,9 @@ export default class ProductsIndexController extends Controller {
     this.isDeleting = true;
     try {
       await this.api.deleteProduct(id);
-      this.model.products = this.model.products.filter(p => p.id !== id);
+      this.data.products = this.data.products.filter(p => p.id !== id);
+      this.data.extractCategoriesAndTags();
+      await this.data.saveToIndexedDB();
     } catch (error) {
       alert('Failed to delete product: ' + error.message);
     } finally {

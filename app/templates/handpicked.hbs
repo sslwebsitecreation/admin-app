@@ -5,7 +5,7 @@
 <div class="page-header">
   <div>
     <h1 class="page-title">Handpicked Sarees</h1>
-    <p class="mt-1" style="font-size: 14px; color: var(--text-secondary);">Max 5 — curated selection for featured display</p>
+    <p class="mt-1" style="font-size: 14px; color: var(--text-secondary);">Maximum 5 sarees to be selected. Add "Handpicked" tag to the products to display here</p>
   </div>
 </div>
 
@@ -21,8 +21,8 @@
 {{else}}
   <div class="handpicked-grid">
     {{#each (repeat 5) as |_ idx|}}
-      {{#if (get @model.handpicked idx)}}
-        {{#let (get @model.handpicked idx) as |product|}}
+      {{#if (get this.handpickedProducts idx)}}
+        {{#let (get this.handpickedProducts idx) as |product|}}
           <div class="handpicked-slot">
             <div class="product-card card-hover">
               <div>

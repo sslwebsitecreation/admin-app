@@ -31,34 +31,6 @@ function applyStatus(row, status) {
   row.isFailed = status === 'failed';
 }
 
-let CATEGORIES = [
-  'Soft Silk',
-  'Bridal Collection',
-  'Wedding Wear',
-  'Banarasi',
-  'Cotton Sarees',
-  'Kanchipuram',
-  'Organza',
-  'Georgette',
-  'Chiffon',
-  'Silk Cotton',
-  'Designer Wear',
-  'Daily Wear',
-];
-
-const TAG_SUGGESTIONS = [
-  'Wedding',
-  'Traditional',
-  'Trending',
-  'Handloom',
-  'Premium',
-  'Festival',
-  'Bridal',
-  'Casual',
-  'Party Wear',
-  'Exclusive',
-];
-
 export default class ProductFormComponent extends Component {
   @service api;
   @service router;
@@ -92,7 +64,11 @@ export default class ProductFormComponent extends Component {
       this.discountedPrice = p.discounted_price?.toString() || '';
       this.stockCount = p.stock_count?.toString() || '';
       this.description = p.description || '';
-      this.tags = p.tags ? [...p.tags] : [];
+      this.tags = p.tags
+        ? Array.isArray(p.tags)
+          ? [...p.tags]
+          : String(p.tags).split(',').map(t => t.trim()).filter(Boolean)
+        : [];
       if (p.images) {
         this.images = p.images.map(src => {
           const row = new ImageRow();
@@ -119,20 +95,21 @@ export default class ProductFormComponent extends Component {
   get isInvalid() { return !this.isValid; }
 
   get isValid() {
-    if (!this.name || !this.category || !this.originalPrice || !this.stockCount) return false;
+    if (!this.name || !this.category || !this.originalPrice || !this.stockCount || !this.tags.length || !this.discountedPrice) return false;
     if (this.images.length === 0) return false;
     return this.images.every(row => row.status === 'uploaded' && row.key && row.color);
   }
 
   get filteredCategories() {
+    const cats = this.data.categoriesArray || [];
     const q = (this.categorySearch || '').toLowerCase();
-    if (!q) return CATEGORIES;
-    return CATEGORIES.filter(c => c.toLowerCase().includes(q));
+    if (!q) return cats;
+    return cats.filter(c => c.toLowerCase().includes(q));
   }
 
   get filteredTagItems() {
     const q = (this.tagSearch || '').toLowerCase();
-    let items = TAG_SUGGESTIONS;
+    let items = this.data.tagsArray || [];
     if (q) {
       items = items.filter(t => t.toLowerCase().includes(q));
     }
@@ -268,9 +245,6 @@ export default class ProductFormComponent extends Component {
     const val = (this.categorySearch || '').trim();
     if (val) {
       this.setCategory(val);
-      if (!CATEGORIES.includes(val)) {
-        CATEGORIES.push(val);
-      }
     }
   }
 
@@ -335,9 +309,6 @@ export default class ProductFormComponent extends Component {
     const val = (this.tagSearch || '').trim();
     if (val && !this.tags.includes(val)) {
       this.tags = [...this.tags, val];
-      if (!TAG_SUGGESTIONS.includes(val)) {
-        TAG_SUGGESTIONS.push(val);
-      }
     }
     this.tagSearch = '';
   }
@@ -507,7 +478,7 @@ export default class ProductFormComponent extends Component {
       const status = result.data?.key ? 'uploaded' : 'failed';
       applyStatus(row, status);
       row.key = result.data?.key || '';
-      row.preview = result.data?.url;
+      row.preview = result.data?.key;
     } catch (err) {
       applyStatus(row, 'failed');
     }
@@ -548,7 +519,7 @@ export default class ProductFormComponent extends Component {
       const payload = {
         name: this.name,
         category: this.category,
-        tags: this.tags,
+        tags: this.tags.join(','),
         original_price: parseFloat(this.originalPrice),
         discounted_price: this.discountedPrice ? parseFloat(this.discountedPrice) : null,
         stock_count: parseInt(this.stockCount),
@@ -575,6 +546,7 @@ export default class ProductFormComponent extends Component {
             created_at: new Date().toISOString(),
           }];
         }
+        this.data.extractCategoriesAndTags();
         await this.data.saveToIndexedDB();
         this.router.transitionTo('products');
       } else this.error = result.message || 'Failed';

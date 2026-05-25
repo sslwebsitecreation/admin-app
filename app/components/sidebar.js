@@ -50,6 +50,14 @@ export default class SidebarComponent extends Component {
     return this.getTodayClickCount(SYNC_KEY);
   }
 
+  get remainingSyncCount() {
+    return Math.max(0, this.dailySyncLimit - this.todaySyncCount);
+  }
+
+  get remainingClearCount() {
+    return Math.max(0, this.dailyClearLimit - this.todayClearCount);
+  }
+
   getTodayClickCount(key) {
     try {
       const data = JSON.parse(localStorage.getItem(key) || '{}');
@@ -105,5 +113,10 @@ export default class SidebarComponent extends Component {
     } catch (err) {
       alert('Clear cache failed: ' + err.message);
     }
+  }
+
+  @action
+  handleLogout() {
+    window.location.href = '/cdn-cgi/access/logout';
   }
 }

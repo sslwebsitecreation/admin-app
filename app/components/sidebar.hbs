@@ -73,6 +73,7 @@
       {{else}}
         Sync Data
       {{/if}}
+      <span class="sidebar-action-remain">({{this.remainingSyncCount}} left)</span>
     </button>
     {{#if this.data.lastSyncedAt}}
       <span class="sidebar-sync-info">
@@ -91,10 +92,11 @@
           <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
         </svg>
         Clear Cache
+        <span class="sidebar-action-remain">({{this.remainingClearCount}} left)</span>
       </button>
     {{/if}}
 
-    <button type="button" class="sidebar-logout">
+    <button type="button" {{on "click" this.handleLogout}} class="sidebar-logout">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
         <polyline points="16 17 21 12 16 7"/>

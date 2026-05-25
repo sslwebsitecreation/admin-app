@@ -48,11 +48,11 @@ export default class HandpickedService extends Service {
   }
 
   getHandpickedProducts(allProducts) {
-    const map = {};
-    let handpickedProducts = allProducts.filter(p => {
-      return p.tags?.includes('Handpicked');
+    return allProducts.filter(p => {
+      if (!p.tags) return false;
+      const tags = Array.isArray(p.tags) ? p.tags : String(p.tags).split(',').map(t => t.trim());
+      return tags.includes('Handpicked');
     });
-    return handpickedProducts;
   }
 
   async updateList(newIds, dataService) {

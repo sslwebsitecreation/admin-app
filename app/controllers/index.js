@@ -21,6 +21,22 @@ export default class IndexController extends Controller {
     return this.getTodayClickCount(SYNC_KEY) < this.dailySyncLimit;
   }
 
+  get todaySyncCount() {
+    return this.getTodayClickCount(SYNC_KEY);
+  }
+
+  get todayClearCount() {
+    return this.getTodayClickCount(CLEAR_CACHE_KEY);
+  }
+
+  get remainingSyncCount() {
+    return Math.max(0, this.dailySyncLimit - this.todaySyncCount);
+  }
+
+  get remainingClearCount() {
+    return Math.max(0, this.dailyClearLimit - this.todayClearCount);
+  }
+
   getTodayClickCount(key) {
     try {
       const data = JSON.parse(localStorage.getItem(key) || '{}');
@@ -60,5 +76,10 @@ export default class IndexController extends Controller {
       await this.data.forceSync();
       window.location.reload();
     } catch (err) { alert('Clear cache failed: ' + err.message); }
+  }
+
+  @action
+  handleLogout() {
+    window.location.href = '/cdn-cgi/access/logout';
   }
 }
