@@ -66,6 +66,15 @@ export default class ApiService extends Service {
     return response.json();
   }
 
+  async updateYoutube(data) {
+    const response = await fetch(`${API_BASE}/youtube`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    return response.json();
+  }
+
   async deleteYoutube(id) {
     const response = await fetch(`${API_BASE}/youtube`, {
       method: 'DELETE',

@@ -5,7 +5,7 @@ module.exports = function (environment) {
     modulePrefix: 'admin-app',
     environment,
     rootURL: '/',
-    locationType: 'auto',
+    locationType: 'hash',
     EmberENV: {
       FEATURES: {
       },
@@ -17,12 +17,13 @@ module.exports = function (environment) {
     APP: {
       apiBaseUrl: '/api/v1',
       imageCdnUrl: 'https://images.abc.in',
+      handpickedLimit: 5,
     },
   };
 
   if (environment === 'development') {
     ENV['ember-cli-mirage'] = {
-      enabled: true
+      enabled: false
     };
   }
 

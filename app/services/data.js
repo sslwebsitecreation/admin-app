@@ -11,6 +11,8 @@ export default class DataService extends Service {
 
   @tracked products = [];
   @tracked youtubeVideos = [];
+  @tracked categoriesArray = [];
+  @tracked tagsArray = [];
   @tracked isLoading = false;
   @tracked error = null;
   @tracked lastSynced = null;
@@ -39,6 +41,8 @@ export default class DataService extends Service {
       if (cached && !this.isCacheExpired(cached)) {
         this.products = cached.products || [];
         this.youtubeVideos = cached.youtubeVideos || [];
+        this.categoriesArray = cached.categoriesArray || [];
+        this.tagsArray = cached.tagsArray || [];
         this.lastSynced = cached.lastSynced || null;
       }
     } catch (e) {
@@ -51,6 +55,8 @@ export default class DataService extends Service {
       await this.indexedDb.set(CACHE_KEY, {
         products: this.products,
         youtubeVideos: this.youtubeVideos,
+        categoriesArray: this.categoriesArray,
+        tagsArray: this.tagsArray,
         lastSynced: this.lastSynced
       });
     } catch (e) {
@@ -63,6 +69,8 @@ export default class DataService extends Service {
     if (cached && cached.products && cached.products.length > 0 && !this.isCacheExpired(cached)) {
       this.products = cached.products;
       this.youtubeVideos = cached.youtubeVideos;
+      this.categoriesArray = cached.categoriesArray || [];
+      this.tagsArray = cached.tagsArray || [];
       this.lastSynced = cached.lastSynced;
       return {
         products: this.products,
@@ -88,6 +96,8 @@ export default class DataService extends Service {
       this.products = data.products || [];
       this.youtubeVideos = data.youtube_videos || [];
       this.lastSynced = new Date().toISOString();
+
+      this.extractCategoriesAndTags();
       
       await this.saveToIndexedDB();
       
@@ -107,8 +117,35 @@ export default class DataService extends Service {
   invalidate() {
     this.products = [];
     this.youtubeVideos = [];
+    this.categoriesArray = [];
+    this.tagsArray = [];
     this.lastSynced = null;
     this.indexedDb.delete(CACHE_KEY).catch(() => {});
+  }
+
+  extractCategoriesAndTags() {
+    const cats = new Set();
+    const tags = new Set();
+
+    for (const p of this.products) {
+      if (p.category) cats.add(p.category.trim());
+
+      if (p.tags) {
+        if (Array.isArray(p.tags)) {
+          for (const t of p.tags) {
+            if (t) tags.add(String(t).trim());
+          }
+        } else if (typeof p.tags === 'string' && p.tags) {
+          for (const t of p.tags.split(',')) {
+            const trimmed = t.trim();
+            if (trimmed) tags.add(trimmed);
+          }
+        }
+      }
+    }
+
+    this.categoriesArray = [...cats].sort();
+    this.tagsArray = [...tags].sort();
   }
 
   getProducts() {

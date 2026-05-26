@@ -5,6 +5,7 @@ import { tracked } from '@glimmer/tracking';
 
 export default class YoutubeController extends Controller {
   @service api;
+  @service data;
 
   @tracked isDeleting = false;
 
@@ -15,7 +16,8 @@ export default class YoutubeController extends Controller {
     this.isDeleting = true;
     try {
       await this.api.deleteYoutube(id);
-      this.model.videos = this.model.videos.filter(v => v.id !== id);
+      this.data.youtubeVideos = this.data.youtubeVideos.filter(v => v.id !== id);
+      await this.data.saveToIndexedDB();
     } catch (error) {
       alert('Failed to delete video: ' + error.message);
     } finally {

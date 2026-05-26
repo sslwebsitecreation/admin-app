@@ -1,0 +1,62 @@
+<header class="top-header">
+  <div class="top-header-inner">
+    <button type="button" class="top-header-logo" {{on "click" this.goHome}}>
+      <img src="assets/logo.jpg" alt="" class="top-header-logo-img" />
+      <span class="top-header-brand">Riya Sri Silks</span>
+    </button>
+
+    <div class="top-header-center desktop-only">
+      <div class="search-bar search-bar--has-btn">
+        <span class="search-bar-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/>
+            <path d="M21 21l-4.35-4.35"/>
+          </svg>
+        </span>
+        <input
+          type="text"
+          class="search-bar-input"
+          placeholder="Search products by name..."
+          value={{this.query}}
+          {{on "input" this.handleQueryInput}}
+          {{on "keydown" this.handleSearchKeydown}}
+        />
+        <button type="button" class="search-bar-btn" {{on "click" this.handleSearchClick}} aria-label="Search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="5" y1="12" x2="19" y2="12"/>
+            <polyline points="12 5 19 12 12 19"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="top-header-right">
+      <span class="top-header-tagline">The Elegance of Every Drape</span>
+    </div>
+
+    <div class="mobile-search mobile-only">
+      <div class="search-bar search-bar--has-btn">
+        <span class="search-bar-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/>
+            <path d="M21 21l-4.35-4.35"/>
+          </svg>
+        </span>
+        <input
+          type="text"
+          class="search-bar-input"
+          placeholder="Search products by name..."
+          value={{this.query}}
+          {{on "input" this.handleQueryInput}}
+          {{on "keydown" this.handleSearchKeydown}}
+        />
+        <button type="button" class="search-bar-btn" {{on "click" this.handleSearchClick}} aria-label="Search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="5" y1="12" x2="19" y2="12"/>
+            <polyline points="12 5 19 12 12 19"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</header>

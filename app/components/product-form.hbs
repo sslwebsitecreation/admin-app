@@ -1,85 +1,408 @@
-<div class="card max-w-2xl mx-auto">
-  <h2 class="text-2xl font-bold mb-6">{{if this.isEdit "Edit" "Add"}} Product</h2>
-
-  {{#if this.error}}
-    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-      {{this.error}}
+<div class="pc-page">
+  <div class="pc-container">
+    {{! --- Top Header --- }}
+    <div class="pc-header">
+      <div class="pc-header-left">
+        <h1 class="pc-title">{{if this.isEdit "Edit" "Add"}} Product</h1>
+        <p class="pc-subtitle">Create and manage saree product details</p>
+      </div>
+      <div class="pc-header-right">
+        <span class="pc-badge">New Product</span>
+      </div>
     </div>
-  {{/if}}
 
-  <form {{on "submit" this.handleSubmit}} class="space-y-4">
-    <div>
-      <label class="form-label">Product Images (1200x1600)</label>
-      
-      <div class="space-y-3 mb-4">
-        {{#each this.images as |img idx|}}
-          {{log img}}
-          <div class="flex items-center gap-4 p-3 border border-gray-200 rounded-lg bg-gray-50">
-            <div class="w-20 h-24 flex-shrink-0 rounded overflow-hidden border border-gray-300 bg-white">
-              {{#if img.preview}}
-                <img src={{img.preview}} alt="Preview" class="w-full h-full object-contain" />
-              {{else}}
-                <div class="w-full h-full flex items-center justify-center text-gray-400 text-xs">No Image</div>
+    {{#if this.error}}
+      <div class="pc-card" style="margin-bottom:16px">
+        <span class="pc-error">{{this.error}}</span>
+      </div>
+    {{/if}}
+
+    <form {{on "submit" this.handleSubmit}}>
+      {{! --- Main Card --- }}
+      <div class="pc-card">
+        {{!-- Product Name --}}
+        <div class="pc-card-section">
+          <label class="pc-label" for="pc-name">Product Name</label>
+          <input
+            id="pc-name"
+            type="text"
+            value={{this.name}}
+            {{on "input" this.updateName}}
+            class="pc-input"
+            placeholder="Kanchipuram Soft Silk Saree"
+            required
+          />
+        </div>
+
+        {{!-- Category --}}
+        <div class="pc-card-section">
+          <label class="pc-label" for="pc-category">Category</label>
+          <div class="pc-dropdown-wrap" tabindex="-1" {{on "focusout" this.handleDropdownFocusOut}}>
+            <button type="button" class="pc-select-trigger" {{on "click" this.toggleCategoryDropdown}} id="pc-category">
+              <span class="pc-select-value {{if this.category 'pc-select-value--chosen' 'pc-select-value--placeholder'}}">
+                {{if this.category this.category "Select category"}}
+              </span>
+              {{#if this.category}}
+                <button type="button" class="pc-select-clear" {{on "mousedown" this.clearCategory}}>&times;</button>
               {{/if}}
-            </div>
-            
-            <div class="flex-1 min-w-0">
-              <div class="text-xs text-gray-500 mb-1">{{img.status}}</div>
-              {{#if img.key}}
-                <div class="text-xs text-gray-600">Key: {{img.key}}</div>
-              {{/if}}
-            </div>
-            
-            <div class="flex items-center gap-2">
-              <button type="button" {{on "click" this.chooseFile}} class="px-3 py-1 bg-gray-600 text-white text-sm rounded">Choose</button>
-            </div>
-            
-            <div class="flex items-center gap-2">
-              <span class="text-xs text-gray-500">Color:</span>
-              <input type="text" value={{img.color}} data-color-index={{idx}} {{on "input" this.handleColorInput}} class="form-input w-20 color-input" placeholder="#000000" />
-            </div>
-            
-            <button type="button" data-remove-index={{idx}} {{on "click" this.removeImage}} class="text-red-600 text-sm">Remove</button>
+              <svg class="pc-chevron {{if this.showCategoryDropdown 'pc-chevron--open'}}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </button>
+
+            {{#if this.showCategoryDropdown}}
+              <div class="pc-dropdown">
+                <div class="pc-dropdown-search">
+                  <svg class="pc-dropdown-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"/>
+                    <path d="M21 21l-4.35-4.35"/>
+                  </svg>
+                  <input
+                    type="text"
+                    class="pc-dropdown-search-input"
+                    value={{this.categorySearch}}
+                    {{on "input" this.handleCategorySearch}}
+                    {{on "keydown" this.handleCategoryKeydown}}
+                    placeholder="Search categories..."
+                    autocomplete="off"
+                  />
+                </div>
+                <div class="pc-dropdown-list">
+                  {{#each this.filteredCategories as |cat|}}
+                    <div
+                      class="pc-dropdown-item {{if (eq cat this.category) 'pc-dropdown-item--selected'}}"
+                      role="button"
+                      {{on "mousedown" (fn this.selectCategory cat)}}
+                    >{{cat}}</div>
+                  {{else}}
+                    <div class="pc-dropdown-item pc-dropdown-item--add" role="button" {{on "mousedown" this.addCustomCategory}}>
+                      + Add "{{this.categorySearch}}"
+                    </div>
+                  {{/each}}
+                </div>
+              </div>
+            {{/if}}
+            <input type="hidden" value={{this.category}} required />
           </div>
-        {{/each}}
+        </div>
+
+        {{!-- Tags --}}
+        <div class="pc-card-section">
+          <label class="pc-label">Tags</label>
+          <div class="pc-dropdown-wrap" tabindex="-1" {{on "focusout" this.handleTagFocusOut}}>
+            <button type="button" class="pc-select-trigger" {{on "click" this.toggleTagDropdown}}>
+              {{#if this.tags.length}}
+                <span class="pc-select-trigger-pills">
+                  {{#each this.visibleTags as |tag|}}
+                    <span class="pc-tag pc-tag--in-trigger">
+                      {{tag}}
+                      <button type="button" class="pc-tag-remove" {{on "mousedown" (fn this.removeTag tag)}}>&times;</button>
+                    </span>
+                  {{/each}}
+                  {{#if this.remainingTagCount}}
+                    <span class="pc-tag pc-tag--overflow">+{{this.remainingTagCount}}</span>
+                  {{/if}}
+                </span>
+              {{else}}
+                <span class="pc-select-value pc-select-value--placeholder">Select tags</span>
+              {{/if}}
+              {{#if this.tags.length}}
+                <button type="button" class="pc-select-clear" {{on "mousedown" this.clearTags}}>&times;</button>
+              {{/if}}
+              <svg class="pc-chevron {{if this.showTagDropdown 'pc-chevron--open'}}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </button>
+
+            {{#if this.showTagDropdown}}
+              <div class="pc-dropdown">
+                <div class="pc-dropdown-search">
+                  <svg class="pc-dropdown-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"/>
+                    <path d="M21 21l-4.35-4.35"/>
+                  </svg>
+                  <input
+                    type="text"
+                    class="pc-dropdown-search-input"
+                    value={{this.tagSearch}}
+                    {{on "input" this.handleTagSearch}}
+                    {{on "keydown" this.handleTagKeydown}}
+                    placeholder="Search or add tags..."
+                    autocomplete="off"
+                  />
+                </div>
+                <div class="pc-dropdown-list">
+                  {{#each this.filteredTagItems as |item|}}
+                    <div
+                      class="pc-dropdown-item {{if item.selected 'pc-dropdown-item--selected'}}"
+                      role="button"
+                      {{on "mousedown" (fn this.addTagSuggestion item.name)}}
+                    >
+                      <span class="pc-dropdown-item-label">{{item.name}}</span>
+                      {{#if item.selected}}
+                        <svg class="pc-dropdown-item-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                          <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                      {{/if}}
+                    </div>
+                  {{else}}
+                    <div class="pc-dropdown-item pc-dropdown-item--add" role="button" {{on "mousedown" this.addCustomTag}}>
+                      + Add "{{this.tagSearch}}"
+                    </div>
+                  {{/each}}
+                </div>
+              </div>
+            {{/if}}
+          </div>
+        </div>
+
+        {{!-- Price --}}
+        <div class="pc-card-section">
+          <div class="pc-price-row">
+            <div>
+              <label class="pc-label" for="pc-price">Original Price</label>
+              <div class="pc-price-input-wrap">
+                <span class="pc-currency">&#8377;</span>
+                <input
+                  id="pc-price"
+                  type="number"
+                  value={{this.originalPrice}}
+                  {{on "input" this.updatePrice}}
+                  class="pc-input"
+                  placeholder="2999"
+                  required
+                />
+              </div>
+            </div>
+            <div>
+              <label class="pc-label" for="pc-dprice">Discounted Price</label>
+              <div class="pc-price-input-wrap">
+                <span class="pc-currency">&#8377;</span>
+                <input
+                  id="pc-dprice"
+                  type="number"
+                  value={{this.discountedPrice}}
+                  {{on "input" this.updateDiscountedPrice}}
+                  class="pc-input"
+                  placeholder="2499"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {{!-- Stock --}}
+        <div class="pc-card-section">
+          <label class="pc-label" for="pc-stock">Stock Count</label>
+          <input
+            id="pc-stock"
+            type="number"
+            value={{this.stockCount}}
+            {{on "input" this.updateStock}}
+            class="pc-input"
+            placeholder="10"
+            required
+          />
+        </div>
+
+        {{!-- Description --}}
+        <div class="pc-card-section">
+          <label class="pc-label" for="pc-desc">Description</label>
+          <textarea
+            id="pc-desc"
+            value={{this.description}}
+            {{on "input" this.updateDesc}}
+            class="pc-textarea"
+            placeholder="Write product details..."
+          ></textarea>
+        </div>
+
+        {{!-- Variants Section --}}
+        <div class="pc-card-section">
+          <div class="pc-section-header">
+            <div>
+              <h3 class="pc-section-title">Variants</h3>
+              <p class="pc-section-subtitle">Each row supports one image upload</p>
+            </div>
+            <button type="button" {{on "click" this.addImage}} class="pc-btn-add-variant">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+              Add Variant
+            </button>
+          </div>
+
+          {{#each this.images as |row idx|}}
+            <div class="pc-variant-card {{if row.isDeleting 'pc-variant-card--deleting'}}">
+              {{#if this.canRemoveImages}}
+                <button type="button" data-remove-index={{idx}} {{on "click" this.removeImage}} class="pc-variant-remove" aria-label="Remove variant">
+                  {{#if row.isDeleting}}
+                    <span class="pc-spinner-xs"></span>
+                  {{else}}
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="3 6 5 6 21 6"/>
+                      <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+                    </svg>
+                  {{/if}}
+                </button>
+              {{/if}}
+
+              <div class="pc-variant-row">
+                {{!-- Image Upload / Preview --}}
+                <div class="pc-upload-box {{if row.preview 'pc-upload-box--has-image'}} {{if row.isConverting 'pc-upload-box--converting'}}" 
+                     data-variant-idx={{idx}}
+                     {{on "click" this.handleUploadBoxClick}}>
+                  {{#if row.isConverting}}
+                    <span class="spinner"></span>
+                    <span class="pc-upload-text">Optimizing...</span>
+                  {{else}}
+                    {{#if row.preview}}
+                      <img src={{image-url row.preview}} />
+                      <div class="pc-upload-overlay">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                          <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                      </div>
+                    {{else}}
+                      <svg class="pc-upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                        <polyline points="17 8 12 3 7 8"/>
+                        <line x1="12" y1="3" x2="12" y2="15"/>
+                      </svg>
+                      <span class="pc-upload-text">Upload Image</span>
+                    {{/if}}
+                  {{/if}}
+                </div>
+
+                {{!-- Fields --}}
+                <div class="pc-variant-fields">
+                  {{!-- Color --}}
+                  <div>
+                    <label class="pc-label" for="pc-color-{{idx}}">Color</label>
+                    <div class="pc-color-row">
+                      <input
+                        type="color"
+                        value={{if row.color row.color "#F97316"}}
+                        data-color-index={{idx}}
+                        {{on "input" this.handleColorPicked}}
+                        class="pc-color-picker"
+                        id="pc-color-{{idx}}"
+                      />
+                      <div class="pc-color-hex">
+                        <input
+                          type="text"
+                          value={{row.colorInput}}
+                          data-color-index={{idx}}
+                          {{on "input" this.handleColorInput}}
+                          {{on "blur" this.handleColorBlur}}
+                          class="pc-input"
+                          placeholder="#F97316"
+                          maxlength="7"
+                        />
+                      </div>
+                      {{#if row.colorError}}
+                        <span class="pc-error">{{row.colorError}}</span>
+                      {{/if}}
+                    </div>
+                  </div>
+
+                  {{!-- Variant Name (at end) --}}
+                  <div class="pc-variant-name-input">
+                    <label class="pc-label" for="pc-vname-{{idx}}">Variant Name</label>
+                    <input
+                      id="pc-vname-{{idx}}"
+                      type="text"
+                      value={{row.colorName}}
+                      data-color-name-index={{idx}}
+                      {{on "input" this.handleColorNameInput}}
+                      class="pc-input"
+                      placeholder="Sunset Orange"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          {{/each}}
+        </div>
       </div>
-      
-      <button type="button" {{on "click" this.addImage}} class="px-4 py-2 bg-indigo-600 text-white rounded-lg">+ Add Image Row</button>
-    </div>
 
-    <div>
-      <label class="form-label">Name *</label>
-      <input type="text" value={{this.name}} {{on "input" this.updateName}} class="form-input" required />
-    </div>
-
-    <div>
-      <label class="form-label">Category *</label>
-      <input type="text" value={{this.category}} {{on "input" this.updateCategory}} class="form-input" required />
-    </div>
-
-    <div class="grid grid-cols-2 gap-4">
-      <div>
-        <label class="form-label">Price *</label>
-        <input type="number" value={{this.originalPrice}} {{on "input" this.updatePrice}} class="form-input" required />
+      {{! --- Bottom Actions --- }}
+      <div class="pc-actions-wrap">
+        <div class="pc-actions">
+          <button type="button" {{on "click" this.goBack}} class="pc-btn pc-btn--secondary">Cancel</button>
+          <button type="submit" class="pc-btn pc-btn--primary" disabled={{this.isInvalid}}>
+            {{#if this.isSaving}}Saving...{{else}}Save Product{{/if}}
+          </button>
+        </div>
       </div>
-      <div>
-        <label class="form-label">Stock *</label>
-        <input type="number" value={{this.stockCount}} {{on "input" this.updateStock}} class="form-input" required />
-      </div>
-    </div>
+    </form>
 
-    <div>
-      <label class="form-label">Description</label>
-      <textarea value={{this.description}} {{on "input" this.updateDesc}} class="form-input" rows="3"></textarea>
-    </div>
-
-    <div class="flex justify-between pt-4">
-      <button type="button" {{on "click" this.goBack}} class="btn-secondary">Cancel</button>
-      <button type="submit" class="btn-primary" disabled={{not this.isValid}}>
-        {{#if this.isSaving}}Saving...{{else}}{{if this.isEdit "Update" "Create"}} Product{{/if}}
-      </button>
-    </div>
-  </form>
-
-  <input type="file" accept="image/*" id="file-input" {{on "change" this.filePicked}} class="hidden" />
+    {{! --- Hidden file input --- }}
+    <input type="file" accept="image/*" id="file-input" {{on "change" this.filePicked}} class="hidden" />
+  </div>
 </div>
+
+{{! --- Upload Preview Modal --- }}
+{{#if this.modalData}}
+  <div class="modal-overlay" {{on "click" this.cancelImage}}>
+    <div class="modal-content upload-modal upload-modal--big" {{on "click" this.stopPropagation}}>
+      <button type="button" class="modal-close-btn" {{on "click" this.cancelImage}}>&times;</button>
+      <div class="modal-body">
+        <div class="modal-preview-side">
+          <h4 class="modal-preview-label">Converted WebP</h4>
+          <div class="modal-preview-image">
+            <img src={{this.modalData.convertedPreviewUrl}} alt="Converted preview" />
+          </div>
+        </div>
+        <div class="modal-info-side">
+          <h4 class="modal-preview-label">Original</h4>
+          <div class="modal-original-thumb">
+            <img src={{this.modalData.originalPreviewUrl}} alt="Original preview" />
+          </div>
+          <div class="modal-comparison">
+            <div class="comparison-row">
+              <span class="comparison-label">Original Size</span>
+              <span class="comparison-value">{{this.modalData.originalSizeFormatted}}</span>
+            </div>
+            <div class="comparison-row">
+              <span class="comparison-label">Converted Size</span>
+              <span class="comparison-value comparison-value--green">{{this.modalData.convertedSizeFormatted}}</span>
+            </div>
+            <div class="comparison-row">
+              <span class="comparison-label">Compression</span>
+              <span class="comparison-value comparison-value--green">{{this.modalData.compressionFormatted}}%</span>
+            </div>
+            <div class="comparison-row">
+              <span class="comparison-label">Type</span>
+              <span class="comparison-value">{{this.modalData.originalType}} &rarr; WebP</span>
+            </div>
+            {{#if this.modalData.width}}
+              <div class="comparison-row">
+                <span class="comparison-label">Resolution</span>
+                <span class="comparison-value">{{this.modalData.width}} &times; {{this.modalData.height}}</span>
+              </div>
+            {{/if}}
+          </div>
+          <div class="modal-actions">
+            <button type="button" {{on "click" this.cancelImage}} class="btn btn-secondary">Cancel</button>
+            <button type="button" {{on "click" this.acceptImage}} class="btn btn-primary">Continue</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{{/if}}
+
+{{! --- Image Preview Modal --- }}
+{{#if this.previewModalData}}
+  <div class="modal-overlay" {{on "click" this.closePreviewModal}}>
+    <div class="modal-content preview-image-modal" {{on "click" this.stopPropagation}}>
+      <button type="button" class="modal-close-btn" {{on "click" this.closePreviewModal}}>&times;</button>
+      <div class="preview-image-wrap">
+        <img src={{image-url this.previewModalData.key}} alt="Full preview" />
+      </div>
+    </div>
+  </div>
+{{/if}}

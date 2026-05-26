@@ -1,21 +1,22 @@
 {{#if this.show}}
-  <div 
-    class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50"
+  <div
+    class="fixed inset-0 flex items-center justify-center z-50 cursor-zoom-in"
+    style="background: rgba(0,0,0,0.9);"
     {{on "click" this.close}}
-    {{on "keydown" this.handleKeydown}}
   >
     <div class="relative max-w-full max-h-full p-4">
       <button
         type="button"
         {{on "click" this.close}}
-        class="absolute top-2 right-2 text-white text-3xl font-bold hover:text-gray-300 z-10"
+        class="absolute"
+        style="top: 8px; right: 8px; color: white; font-size: 30px; font-weight: bold; z-index: 10; border: none; background: none; cursor: pointer; line-height: 1;"
       >
         &times;
       </button>
-      <p class="text-white text-center text-sm mb-2">1200 x 1600</p>
-      <img 
-        src={{this.imageUrl}} 
-        alt="Full preview" 
+      <p style="color: white; text-align: center; font-size: 14px; margin-bottom: 8px;">1200 x 1600</p>
+      <img
+        src={{this.imageUrl}}
+        alt="Full preview"
         class="max-w-[1200px] max-h-[1600px] object-contain"
       />
     </div>

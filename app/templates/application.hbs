@@ -1,1 +1,15 @@
-<Sidebar />
+{{#if this.data.isLoading}}
+  <div class="app-loading-overlay">
+    <div class="app-loading-spinner"></div>
+    <p class="app-loading-text">Syncing data...</p>
+  </div>
+{{/if}}
+
+<TopHeader />
+<div class="app-layout">
+  <Sidebar />
+  <main class="main-content">
+    {{outlet}}
+  </main>
+</div>
+<BottomNavigation />

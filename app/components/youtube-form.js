@@ -7,11 +7,12 @@ import YoutubeVideo from 'admin-app/models/youtube-video';
 export default class YoutubeFormComponent extends Component {
   @service api;
   @service router;
+  @service data;
 
   @tracked link = '';
   @tracked title = '';
   @tracked description = '';
-  @tracked productIds = '';
+  @tracked selectedProductIds = [];
 
   @tracked isSaving = false;
   @tracked error = null;
@@ -19,17 +20,49 @@ export default class YoutubeFormComponent extends Component {
   @tracked videoIdValid = false;
   @tracked rawInput = '';
 
+  @tracked showProductModal = false;
+  @tracked productSearchInput = '';
+  @tracked productSearch = '';
+
   constructor() {
     super(...arguments);
     if (this.args.video) {
-      this.link = this.args.video.link || '';
-      this.title = this.args.video.title || '';
-      this.description = this.args.video.description || '';
-      this.productIds = this.args.video.product_ids || '';
-      this.rawInput = this.args.video.link || '';
+      const v = this.args.video;
+      this.link = v.link || '';
+      this.title = v.title || '';
+      this.description = v.description || '';
+      this.rawInput = v.link || '';
       this.videoIdValid = this.link && /^[a-zA-Z0-9_-]{11}$/.test(this.link);
       this.previewUrl = this.videoIdValid ? `https://www.youtube.com/embed/${this.link}` : null;
+
+      this.loadSelectedIds(v.product_ids);
     }
+  }
+
+  loadSelectedIds(raw) {
+    if (!raw) return;
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        this.selectedProductIds = parsed;
+        return;
+      }
+    } catch (_) {}
+    const ids = String(raw).split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n));
+    if (ids.length) this.selectedProductIds = ids;
+  }
+
+  get filteredProducts() {
+    const q = (this.productSearch || '').toLowerCase();
+    let items = this.data.products || [];
+    if (q) {
+      items = items.filter(p => (p.name || '').toLowerCase().includes(q));
+    }
+    return items.map(p => ({ ...p, isSelected: this.selectedProductIds.includes(p.id) }));
+  }
+
+  get selectedProducts() {
+    return (this.data.products || []).filter(p => this.selectedProductIds.includes(p.id));
   }
 
   get isValid() {
@@ -44,7 +77,6 @@ export default class YoutubeFormComponent extends Component {
   handleLinkInput(event) {
     const input = event.target.value;
     this.rawInput = input;
-
     const videoId = YoutubeVideo.extractVideoId(input);
     if (videoId) {
       this.link = videoId;
@@ -58,63 +90,88 @@ export default class YoutubeFormComponent extends Component {
     }
   }
 
-  @action
-  handleTitleInput(event) {
-    this.title = event.target.value;
-  }
+  @action handleTitleInput(event) { this.title = event.target.value; }
+  @action handleDescriptionInput(event) { this.description = event.target.value; }
+  @action handleProductSearchInput(event) { this.productSearchInput = event.target.value; }
 
-  @action
-  handleDescriptionInput(event) {
-    this.description = event.target.value;
-  }
-
-  @action
-  handleProductIdsInput(event) {
-    const value = event.target.value;
-    const trimmed = value.trim();
-    if (trimmed.startsWith('[')) {
-      this.productIds = trimmed;
-    } else if (trimmed) {
-      const ids = trimmed.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id));
-      this.productIds = JSON.stringify(ids);
-    } else {
-      this.productIds = '';
+  @action handleProductSearchKeydown(event) {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      this.applyProductSearch();
     }
   }
 
-  @action
-  goBack() {
-    this.router.history.back();
+  @action applyProductSearch() {
+    this.productSearch = this.productSearchInput;
   }
 
-  @action
-  async handleSubmit(event) {
-    event.preventDefault();
+  @action openProductModal() {
+    this.productSearchInput = '';
+    this.productSearch = '';
+    this.showProductModal = true;
+  }
 
+  @action closeProductModal() {
+    this.showProductModal = false;
+    this.productSearchInput = '';
+    this.productSearch = '';
+  }
+
+  @action stopPropagation(e) { e.stopPropagation(); }
+
+  @action toggleProduct(product) {
+    if (this.selectedProductIds.includes(product.id)) {
+      this.selectedProductIds = this.selectedProductIds.filter(id => id !== product.id);
+    } else {
+      this.selectedProductIds = [...this.selectedProductIds, product.id];
+    }
+  }
+
+  @action goBack() {
+    this.router.transitionTo('youtube');
+  }
+
+  @action clearSelection() {
+    this.selectedProductIds = [];
+  }
+
+  @action async handleSubmit(event) {
+    event.preventDefault();
     if (!this.isValid) {
       this.error = 'Please fill title and a valid YouTube URL';
       return;
     }
-
     this.isSaving = true;
     this.error = null;
-
     try {
+      const payload = {
+        link: this.link,
+        title: this.title,
+        description: this.description,
+        product_ids: JSON.stringify(this.selectedProductIds),
+      };
+      let result;
       if (this.isEdit) {
+        result = await this.api.updateYoutube({ ...payload, id: this.args.video.id });
+      } else {
+        result = await this.api.createYoutube(payload);
+      }
+      if (result.success) {
+        if (this.isEdit) {
+          this.data.youtubeVideos = this.data.youtubeVideos.map(v =>
+            v.id === this.args.video.id ? { ...v, ...payload } : v
+          );
+        } else {
+          this.data.youtubeVideos = [...this.data.youtubeVideos, {
+            id: result.data?.video_id || Date.now(),
+            ...payload,
+            created_at: new Date().toISOString(),
+          }];
+        }
+        await this.data.saveToIndexedDB();
         this.router.transitionTo('youtube');
       } else {
-        const result = await this.api.createYoutube({
-          link: this.link,
-          title: this.title,
-          description: this.description,
-          product_ids: this.productIds,
-        });
-
-        if (result.success) {
-          this.router.transitionTo('youtube');
-        } else {
-          this.error = result.message || 'Failed to create video';
-        }
+        this.error = result.message || 'Failed to save video';
       }
     } catch (err) {
       this.error = err.message || 'Failed to save video';

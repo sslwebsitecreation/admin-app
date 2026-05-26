@@ -1,0 +1,49 @@
+<div class="video-card fade-in">
+  <div class="video-card-thumb">
+    {{#if @video.link}}
+      <img
+        src="https://img.youtube.com/vi/{{@video.link}}/mqdefault.jpg"
+        alt={{@video.title}}
+        loading="lazy"
+        onerror={{this.handleImageError}}
+      />
+      <div class="video-card-thumb-overlay">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <path d="M8 5v14l11-7z"/>
+        </svg>
+      </div>
+    {{else}}
+      <div class="flex items-center justify-center h-full" style="background: var(--bg-main);">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--text-light)" stroke-width="1.5">
+          <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/>
+          <line x1="8" y1="2" x2="8" y2="22"/>
+          <line x1="16" y1="2" x2="16" y2="22"/>
+          <line x1="2" y1="8" x2="22" y2="8"/>
+          <line x1="2" y1="16" x2="22" y2="16"/>
+        </svg>
+      </div>
+    {{/if}}
+  </div>
+  <div class="video-card-body">
+    <p class="video-card-url">{{if @video.title @video.title @video.link}}</p>
+    <div class="video-card-meta">
+      <span class="badge badge-count">
+        {{length-of @video.product_ids}} Linked {{if (eq (length-of @video.product_ids) 1) "Saree" "Sarees"}}
+      </span>
+      <div class="video-card-actions">
+        <LinkTo @route="youtube.edit" @model={{@video.id}} class="btn-icon" aria-label="Edit video">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+            <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+          </svg>
+        </LinkTo>
+        <button type="button" {{on "click" (fn @onDelete @video.id)}} class="btn-icon danger" aria-label="Delete video">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

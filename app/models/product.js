@@ -1,6 +1,7 @@
 export default class ProductImage {
   id = null;
   color = '';
+  color_name = '';
   key = '';
 
   static fromJson(json) {
@@ -16,9 +17,12 @@ export default class Product {
   description = '';
   category = '';
   original_price = 0;
+  discounted_price = 0;
   stock_count = 0;
   images = [];
   created_at = null;
+  handpicked = false;
+  handpicked_order = 0;
 
   static fromJson(json) {
     const product = new Product();
