@@ -39,17 +39,14 @@ export default class YoutubeFormComponent extends Component {
     }
   }
 
-  loadSelectedIds(raw) {
-    if (!raw) return;
-    try {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) {
-        this.selectedProductIds = parsed;
-        return;
-      }
-    } catch (_) {}
-    const ids = String(raw).split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n));
-    if (ids.length) this.selectedProductIds = ids;
+  loadSelectedIds(idString) {
+    if (!idString) return;
+    let idsArray = idsString.split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n));
+    if (idsArray.length) {
+      this.selectedProductIds = idsArray;
+      return;
+    }
+    this.selectedProductIds = [];
   }
 
   get filteredProducts() {
@@ -143,12 +140,13 @@ export default class YoutubeFormComponent extends Component {
     }
     this.isSaving = true;
     this.error = null;
+    let productIdsString = this.selectedProductIds.length ? this.selectedProductIds.join(',') : '';
     try {
       const payload = {
         link: this.link,
         title: this.title,
         description: this.description,
-        product_ids: JSON.stringify(this.selectedProductIds),
+        product_ids: JSON.stringify(productIdsString),
       };
       let result;
       if (this.isEdit) {
