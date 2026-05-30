@@ -9,7 +9,7 @@
     <div>
       <label class="form-label">YouTube URL *</label>
       <input
-        type="url"
+        type="text"
         value={{this.rawInput}}
         {{on "input" this.handleLinkInput}}
         class="form-input"
@@ -36,18 +36,19 @@
     {{/if}}
 
     <div>
-      <label class="form-label">Title *</label>
+      <label class="form-label">Uploaded date *</label>
       <input
         type="text"
         value={{this.title}}
         {{on "input" this.handleTitleInput}}
         class="form-input"
+        placeholder="May 28, 2026"
         required
       />
     </div>
 
     <div>
-      <label class="form-label">Description</label>
+      <label class="form-label">Title</label>
       <textarea
         value={{this.description}}
         {{on "input" this.handleDescriptionInput}}

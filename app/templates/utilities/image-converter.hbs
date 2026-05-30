@@ -10,6 +10,7 @@
     <div>
       <h3 class="font-semibold mb-3">1. Select Image</h3>
       <input
+        id="ic-file-input"
         type="file"
         accept="image/*"
         {{on "change" this.handleFileSelect}}
@@ -154,23 +155,21 @@
 
 {{#if this.showExactPreview}}
   <div
-    class="fixed inset-0 z-50 overflow-auto"
-    style="background: rgba(0,0,0,0.9);"
+    style="position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 9999; overflow: auto; background: rgba(0,0,0,0.9);"
     {{on "click" this.handleCloseExactPreview}}
   >
-    <div class="flex justify-center items-start min-h-screen p-8">
-      <div class="relative">
+    <div style="display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; padding: 32px;" {{on "click" this.stopPropagation}}>
+      <div style="position: relative;">
         <button
           type="button"
           {{on "click" this.handleCloseExactPreview}}
-          class="absolute"
-          style="top: -8px; right: -8px; color: white; font-size: 30px; font-weight: bold; z-index: 50; background: black; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border: none; cursor: pointer; line-height: 1;"
+          style="position: absolute; top: -8px; right: -8px; color: white; font-size: 30px; font-weight: bold; z-index: 50; background: black; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border: none; cursor: pointer; line-height: 1;"
         >
           &times;
         </button>
         <p style="color: white; text-align: center; font-size: 14px; margin-bottom: 8px;">{{this.width}} x {{this.height}} ({{this.convertedSize}})</p>
         <div style="background: white; box-shadow: var(--shadow-card);">
-          <img src={{this.convertedPreview}} alt="Exact Preview" style="width: {{this.width}}px; height: {{this.height}}px; display: block;" />
+          <img src={{this.convertedPreview}} alt="Exact Preview" style="max-width: 90vw; max-height: 80vh; display: block; margin: auto;" />
         </div>
       </div>
     </div>
@@ -179,23 +178,21 @@
 
 {{#if this.showOriginalFull}}
   <div
-    class="fixed inset-0 flex items-center justify-center z-50"
-    style="background: rgba(0,0,0,0.9);"
+    style="position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 9999; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.9);"
     {{on "click" this.handleCloseOriginalFull}}
   >
-    <div class="relative max-w-full max-h-full p-4 overflow-auto">
+    <div style="position: relative; max-width: 100%; max-height: 100%; padding: 16px; overflow: auto;" {{on "click" this.stopPropagation}}>
       <button
         type="button"
         {{on "click" this.handleCloseOriginalFull}}
-        class="absolute"
-        style="top: 8px; right: 8px; color: white; font-size: 30px; font-weight: bold; z-index: 10; padding: 8px; border: none; background: none; cursor: pointer; line-height: 1;"
+        style="position: absolute; top: 8px; right: 8px; color: white; font-size: 30px; font-weight: bold; z-index: 10; padding: 8px; border: none; background: none; cursor: pointer; line-height: 1;"
       >
         &times;
       </button>
       {{#if this.fileInfo}}
         <p style="color: white; text-align: center; font-size: 14px; margin-bottom: 8px;">Original: {{this.fileInfo.width}} x {{this.fileInfo.height}}</p>
       {{/if}}
-      <img src={{this.originalPreview}} alt="Original Full" class="max-w-full" style="max-height: 80vh;" />
+      <img src={{this.originalPreview}} alt="Original Full" style="max-width: 100%; max-height: 80vh;" />
     </div>
   </div>
 {{/if}}

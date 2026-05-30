@@ -8,6 +8,7 @@ const DEFAULT_CACHE_EXPIRY_HOURS = 1;
 
 export default class DataService extends Service {
   @service indexedDb;
+  @service api;
 
   @tracked products = [];
   @tracked youtubeVideos = [];
@@ -90,8 +91,7 @@ export default class DataService extends Service {
         await fetch('/api/v1/rebuild-cache', { method: 'POST' });
       } catch (e) {}
       
-      const response = await fetch('/api/v1/all');
-      const data = await response.json();
+      const data = await this.api.getAll();
       
       this.products = data.products || [];
       this.youtubeVideos = data.youtube_videos || [];

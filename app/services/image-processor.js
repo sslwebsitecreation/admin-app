@@ -7,7 +7,7 @@ export default class ImageProcessorService extends Service {
       height = 1600,
       quality = 0.9,
       maintainAspectRatio = true,
-      backgroundColor = '#ffffff'
+      backgroundColor = '#ffffff',
     } = options;
 
     return new Promise((resolve, reject) => {
@@ -44,9 +44,17 @@ export default class ImageProcessorService extends Service {
         ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
 
         const targetSizeKB = options.targetSizeKB || null;
-        
+
         if (targetSizeKB) {
-          this.convertWithSizeLimit(canvas, targetSizeKB, width, height, file.name, resolve, reject);
+          this.convertWithSizeLimit(
+            canvas,
+            targetSizeKB,
+            width,
+            height,
+            file.name,
+            resolve,
+            reject
+          );
         } else {
           canvas.toBlob(
             (blob) => {
@@ -57,7 +65,7 @@ export default class ImageProcessorService extends Service {
                   height,
                   quality,
                   originalName: file.name,
-                  convertedName: this.generateWebPName(file.name)
+                  convertedName: this.generateWebPName(file.name),
                 });
               } else {
                 reject(new Error('Failed to convert image'));
@@ -92,7 +100,7 @@ export default class ImageProcessorService extends Service {
         URL.revokeObjectURL(objectUrl);
         resolve({
           width: img.width,
-          height: img.height
+          height: img.height,
         });
       };
 
@@ -110,27 +118,47 @@ export default class ImageProcessorService extends Service {
       maxSizeKB = 400,
       requiredWidth = 1200,
       requiredHeight = 1600,
-      allowedFormats = ['image/jpeg', 'image/png', 'image/gif', 'image/bmp', 'image/webp']
+      allowedFormats = [
+        'image/jpeg',
+        'image/png',
+        'image/gif',
+        'image/bmp',
+        'image/webp',
+      ],
     } = options;
 
     const errors = [];
 
     if (!allowedFormats.includes(file.type)) {
-      errors.push(`Invalid format. Allowed: ${allowedFormats.map(f => f.split('/')[1]).join(', ')}`);
+      errors.push(
+        `Invalid format. Allowed: ${allowedFormats
+          .map((f) => f.split('/')[1])
+          .join(', ')}`
+      );
     }
 
     const sizeKB = file.size / 1024;
     if (sizeKB > maxSizeKB) {
-      errors.push(`File too large: ${sizeKB.toFixed(1)}KB (max: ${maxSizeKB}KB)`);
+      errors.push(
+        `File too large: ${sizeKB.toFixed(1)}KB (max: ${maxSizeKB}KB)`
+      );
     }
 
     return {
       valid: errors.length === 0,
-      errors
+      errors,
     };
   }
 
-  convertWithSizeLimit(canvas, targetSizeKB, width, height, originalName, resolve, reject) {
+  convertWithSizeLimit(
+    canvas,
+    targetSizeKB,
+    width,
+    height,
+    originalName,
+    resolve,
+    reject
+  ) {
     let quality = 0.9;
     const minQuality = 0.1;
     const step = 0.1;
@@ -153,7 +181,7 @@ export default class ImageProcessorService extends Service {
               quality,
               originalName,
               convertedName: this.generateWebPName(originalName),
-              actualSizeKB: currentSizeKB.toFixed(1)
+              actualSizeKB: currentSizeKB.toFixed(1),
             });
           } else {
             quality -= step;

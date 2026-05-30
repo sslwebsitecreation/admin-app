@@ -35,6 +35,7 @@ export default class ProductFormComponent extends Component {
   @service api;
   @service router;
   @service data;
+  @service draft;
 
   @tracked name = '';
   @tracked category = '';
@@ -53,7 +54,6 @@ export default class ProductFormComponent extends Component {
   @tracked targetImageIndex = -1;
   @tracked modalData = null;
   @tracked previewModalData = null;
-
   constructor() {
     super(...arguments);
     if (this.args.product) {
@@ -67,10 +67,13 @@ export default class ProductFormComponent extends Component {
       this.tags = p.tags
         ? Array.isArray(p.tags)
           ? [...p.tags]
-          : String(p.tags).split(',').map(t => t.trim()).filter(Boolean)
+          : String(p.tags)
+              .split(',')
+              .map((t) => t.trim())
+              .filter(Boolean)
         : [];
       if (p.images) {
-        this.images = p.images.map(src => {
+        this.images = p.images.map((src) => {
           const row = new ImageRow();
           row.key = src.key;
           row.color = src.color || '';
@@ -83,6 +86,39 @@ export default class ProductFormComponent extends Component {
       }
     } else {
       this.images = [new ImageRow()];
+      this._restoreDraft();
+    }
+    this._boundBeforeUnload = () => this.saveDraft();
+    window.addEventListener('beforeunload', this._boundBeforeUnload);
+  }
+
+  willDestroy() {
+    super.willDestroy(...arguments);
+    window.removeEventListener('beforeunload', this._boundBeforeUnload);
+    this.saveDraft();
+  }
+
+  async _restoreDraft() {
+    const saved = await this.draft.loadDraft();
+    if (!saved) return;
+    this.name = saved.name || '';
+    this.category = saved.category || '';
+    this.originalPrice = saved.originalPrice || '';
+    this.discountedPrice = saved.discountedPrice || '';
+    this.stockCount = saved.stockCount || '';
+    this.description = saved.description || '';
+    this.tags = saved.tags ? [...saved.tags] : [];
+    if (saved.images && saved.images.length > 0) {
+      this.images = saved.images.map((src) => {
+        const row = new ImageRow();
+        row.color = src.color || '';
+        row.colorInput = src.colorInput || src.color || '';
+        row.colorName = src.colorName || '';
+        row.key = src.key || null;
+        row.preview = src.key || src.preview || null;
+        row.status = src.key ? 'uploaded' : '';
+        return row;
+      });
     }
   }
 
@@ -90,30 +126,55 @@ export default class ProductFormComponent extends Component {
     return new ImageRow();
   }
 
-  get isEdit() { return !!this.args.product; }
-  get canRemoveImages() { return this.images.length > 1 && !this.images.some(i => i.isDeleting); }
-  get isInvalid() { return !this.isValid; }
+  get isEdit() {
+    return !!this.args.product;
+  }
+  get canRemoveImages() {
+    return this.images.length > 1 && !this.images.some((i) => i.isDeleting);
+  }
+  get isInvalid() {
+    return !this.isValid;
+  }
+
+  get descriptionError() {
+    const len = (this.description || '').length;
+    if (len > 0 && len < 500) {
+      return `Description must be at least 500 characters (${len}/500)`;
+    }
+    return null;
+  }
 
   get isValid() {
-    if (!this.name || !this.category || !this.originalPrice || !this.stockCount || !this.tags.length || !this.discountedPrice) return false;
+    if (
+      !this.name ||
+      !this.category ||
+      !this.originalPrice ||
+      !this.stockCount ||
+      !this.tags.length ||
+      !this.discountedPrice ||
+      this.descriptionError
+    )
+      return false;
     if (this.images.length === 0) return false;
-    return this.images.every(row => row.status === 'uploaded' && row.key && row.color);
+    return this.images.every(
+      (row) => row.status === 'uploaded' && row.key && row.color
+    );
   }
 
   get filteredCategories() {
     const cats = this.data.categoriesArray || [];
     const q = (this.categorySearch || '').toLowerCase();
     if (!q) return cats;
-    return cats.filter(c => c.toLowerCase().includes(q));
+    return cats.filter((c) => c.toLowerCase().includes(q));
   }
 
   get filteredTagItems() {
     const q = (this.tagSearch || '').toLowerCase();
     let items = this.data.tagsArray || [];
     if (q) {
-      items = items.filter(t => t.toLowerCase().includes(q));
+      items = items.filter((t) => t.toLowerCase().includes(q));
     }
-    return items.map(t => ({ name: t, selected: this.tags.includes(t) }));
+    return items.map((t) => ({ name: t, selected: this.tags.includes(t) }));
   }
 
   get visibleTags() {
@@ -139,8 +200,8 @@ export default class ProductFormComponent extends Component {
   }
 
   canvasToBlob(canvas, quality) {
-    return new Promise(resolve => {
-      canvas.toBlob(blob => resolve(blob), 'image/webp', quality);
+    return new Promise((resolve) => {
+      canvas.toBlob((blob) => resolve(blob), 'image/webp', quality);
     });
   }
 
@@ -155,7 +216,7 @@ export default class ProductFormComponent extends Component {
     let quality = 0.85;
     let blob = await this.canvasToBlob(canvas, quality);
 
-    const targetBytes = 400 * 1024;
+    const targetBytes = 200 * 1024;
     while (blob.size > targetBytes && quality > 0.08) {
       quality = Math.max(quality - 0.08, 0.08);
       blob = await this.canvasToBlob(canvas, quality);
@@ -187,11 +248,21 @@ export default class ProductFormComponent extends Component {
   }
 
   // --- simple field actions ---
-  @action updateName(e) { this.name = e.target.value; }
-  @action updatePrice(e) { this.originalPrice = e.target.value; }
-  @action updateDiscountedPrice(e) { this.discountedPrice = e.target.value; }
-  @action updateStock(e) { this.stockCount = e.target.value; }
-  @action updateDesc(e) { this.description = e.target.value; }
+  @action updateName(e) {
+    this.name = e.target.value;
+  }
+  @action updatePrice(e) {
+    this.originalPrice = e.target.value;
+  }
+  @action updateDiscountedPrice(e) {
+    this.discountedPrice = e.target.value;
+  }
+  @action updateStock(e) {
+    this.stockCount = e.target.value;
+  }
+  @action updateDesc(e) {
+    this.description = e.target.value;
+  }
 
   // --- category dropdown ---
   @action toggleCategoryDropdown() {
@@ -298,7 +369,7 @@ export default class ProductFormComponent extends Component {
 
   @action addTagSuggestion(tag) {
     if (this.tags.includes(tag)) {
-      this.tags = this.tags.filter(t => t !== tag);
+      this.tags = this.tags.filter((t) => t !== tag);
     } else {
       this.tags = [...this.tags, tag];
     }
@@ -314,7 +385,7 @@ export default class ProductFormComponent extends Component {
   }
 
   @action removeTag(tag) {
-    this.tags = this.tags.filter(t => t !== tag);
+    this.tags = this.tags.filter((t) => t !== tag);
   }
 
   @action clearTags(e) {
@@ -338,7 +409,9 @@ export default class ProductFormComponent extends Component {
     if (row.key) {
       try {
         await this.api.deleteImage(row.key);
-      } catch (_) { }
+      } catch (_) {
+        // ignore
+      }
     }
 
     this.images = this.images.filter((_, i) => i !== idx);
@@ -415,7 +488,10 @@ export default class ProductFormComponent extends Component {
       return;
     }
 
-    const idx = this.targetImageIndex >= 0 ? this.targetImageIndex : this.images.length - 1;
+    const idx =
+      this.targetImageIndex >= 0
+        ? this.targetImageIndex
+        : this.images.length - 1;
     const previewUrl = URL.createObjectURL(file);
     const row = this.images[idx];
     if (!row) return;
@@ -429,12 +505,19 @@ export default class ProductFormComponent extends Component {
 
       const os = result.originalSize;
       const cs = result.convertedSize;
-      const cr = os && cs ? ((os - cs) / os * 100).toFixed(1) : '';
-      const fmt = (b) => { if (!b) return ''; if (b < 1024) return b + ' B'; if (b < 1048576) return (b / 1024).toFixed(0) + ' KB'; return (b / 1048576).toFixed(1) + ' MB'; };
+      const cr = os && cs ? (((os - cs) / os) * 100).toFixed(1) : '';
+      const fmt = (b) => {
+        if (!b) return '';
+        if (b < 1024) return b + ' B';
+        if (b < 1048576) return (b / 1024).toFixed(0) + ' KB';
+        return (b / 1048576).toFixed(1) + ' MB';
+      };
 
       const loadedImg = new Image();
       loadedImg.src = previewUrl;
-      await new Promise(r => { loadedImg.onload = r; });
+      await new Promise((r) => {
+        loadedImg.onload = r;
+      });
       const autoColor = this.extractColorFromImage(loadedImg);
 
       row.colorInput = autoColor;
@@ -507,13 +590,40 @@ export default class ProductFormComponent extends Component {
     this.previewModalData = null;
   }
 
-  @action stopPropagation(e) { e.stopPropagation(); }
+  @action stopPropagation(e) {
+    e.stopPropagation();
+  }
 
-  @action goBack() { this.router.transitionTo('products'); }
+  @action goBack() {
+    this.router.transitionTo('products');
+  }
+
+  @action async saveDraft() {
+    const draftData = {
+      name: this.name,
+      category: this.category,
+      originalPrice: this.originalPrice,
+      discountedPrice: this.discountedPrice,
+      stockCount: this.stockCount,
+      description: this.description,
+      tags: [...this.tags],
+      images: this.images.map((r) => ({
+        color: r.color,
+        colorInput: r.colorInput,
+        colorName: r.colorName,
+        key: r.key,
+        preview: r.preview,
+      })),
+    };
+    await this.draft.saveDraft(draftData);
+  }
 
   @action async handleSubmit(e) {
     e.preventDefault();
-    if (!this.isValid) { this.error = 'Complete all images first'; return; }
+    if (!this.isValid) {
+      this.error = 'Complete all images first';
+      return;
+    }
     this.isSaving = true;
     try {
       const payload = {
@@ -521,30 +631,40 @@ export default class ProductFormComponent extends Component {
         category: this.category,
         tags: this.tags.join(','),
         original_price: parseFloat(this.originalPrice),
-        discounted_price: this.discountedPrice ? parseFloat(this.discountedPrice) : null,
+        discounted_price: this.discountedPrice
+          ? parseFloat(this.discountedPrice)
+          : null,
         stock_count: parseInt(this.stockCount),
         description: this.description,
-        images: this.images.map(r => ({ color: r.color, color_name: r.colorName, image_link: r.key })),
+        images: this.images.map((r) => ({
+          color: r.color,
+          color_name: r.colorName,
+          image_link: r.key,
+        })),
       };
       const result = this.isEdit
         ? await this.api.updateProduct({ ...payload, id: this.args.product.id })
         : await this.api.createProduct(payload);
       if (result.success) {
+        this.draft.clearDraft();
         if (this.isEdit) {
-          this.data.products = this.data.products.map(p =>
+          this.data.products = this.data.products.map((p) =>
             p.id === this.args.product.id ? { ...p, ...payload } : p
           );
         } else {
-          this.data.products = [...this.data.products, {
-            id: result.data?.product_id || Date.now(),
-            ...payload,
-            images: this.images.map(r => ({
-              color: r.color,
-              color_name: r.colorName,
-              key: r.key,
-            })),
-            created_at: new Date().toISOString(),
-          }];
+          this.data.products = [
+            ...this.data.products,
+            {
+              id: result.data?.product_id || Date.now(),
+              ...payload,
+              images: this.images.map((r) => ({
+                color: r.color,
+                color_name: r.colorName,
+                key: r.key,
+              })),
+              created_at: new Date().toISOString(),
+            },
+          ];
         }
         this.data.extractCategoriesAndTags();
         await this.data.saveToIndexedDB();

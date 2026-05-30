@@ -10,7 +10,6 @@
         <span class="pc-badge">New Product</span>
       </div>
     </div>
-
     {{#if this.error}}
       <div class="pc-card" style="margin-bottom:16px">
         <span class="pc-error">{{this.error}}</span>
@@ -212,9 +211,12 @@
             id="pc-desc"
             value={{this.description}}
             {{on "input" this.updateDesc}}
-            class="pc-textarea"
-            placeholder="Write product details..."
+            class="pc-textarea {{if this.descriptionError 'pc-textarea--error'}}"
+            placeholder="Write product details... (min 500 characters)"
           ></textarea>
+          {{#if this.descriptionError}}
+            <span class="pc-error">{{this.descriptionError}}</span>
+          {{/if}}
         </div>
 
         {{!-- Variants Section --}}
@@ -308,7 +310,7 @@
                     </div>
                   </div>
 
-                  {{!-- Variant Name (at end) --}}
+                  {{!--- Variant Name (at end) --
                   <div class="pc-variant-name-input">
                     <label class="pc-label" for="pc-vname-{{idx}}">Variant Name</label>
                     <input
@@ -319,8 +321,10 @@
                       {{on "input" this.handleColorNameInput}}
                       class="pc-input"
                       placeholder="Sunset Orange"
+                      required
                     />
                   </div>
+                  --}}
                 </div>
               </div>
             </div>
@@ -332,7 +336,7 @@
       <div class="pc-actions-wrap">
         <div class="pc-actions">
           <button type="button" {{on "click" this.goBack}} class="pc-btn pc-btn--secondary">Cancel</button>
-          <button type="submit" class="pc-btn pc-btn--primary" disabled={{this.isInvalid}}>
+          <button type="submit" class="pc-btn pc-btn--primary" disabled={{or this.isSaving this.isInvalid}}>
             {{#if this.isSaving}}Saving...{{else}}Save Product{{/if}}
           </button>
         </div>

@@ -69,7 +69,7 @@ let youtubeVideos = [
     link: 'dQw4w9WgXcQ',
     title: 'Bridal Saree Collection 2024',
     description: 'Explore our stunning collection of bridal sarees',
-    product_ids: '[1,4]',
+    product_ids: '1,4',
     created_at: '2024-01-10T08:00:00Z'
   },
   {
@@ -77,7 +77,7 @@ let youtubeVideos = [
     link: 'jNQXAC9IVRw',
     title: 'Cotton Saree Styling Tips',
     description: 'Learn how to style cotton sarees for different occasions',
-    product_ids: '[2]',
+    product_ids: '2',
     created_at: '2024-01-25T12:30:00Z'
   },
   {
@@ -85,7 +85,7 @@ let youtubeVideos = [
     link: '9bZkp7q19f0',
     title: 'Designer Saree Showcase',
     description: 'Exclusive designer sarees for special events',
-    product_ids: '[3]',
+    product_ids: '3',
     created_at: '2024-02-08T15:00:00Z'
   }
 ];

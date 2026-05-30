@@ -41,7 +41,7 @@ export default class YoutubeFormComponent extends Component {
 
   loadSelectedIds(idString) {
     if (!idString) return;
-    let idsArray = idsString.split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n));
+    let idsArray = idString.split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n));
     if (idsArray.length) {
       this.selectedProductIds = idsArray;
       return;
@@ -146,7 +146,7 @@ export default class YoutubeFormComponent extends Component {
         link: this.link,
         title: this.title,
         description: this.description,
-        product_ids: JSON.stringify(productIdsString),
+        product_ids: productIdsString,
       };
       let result;
       if (this.isEdit) {

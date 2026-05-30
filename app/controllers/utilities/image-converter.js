@@ -51,7 +51,13 @@ export default class UtilitiesImageConverterController extends Controller {
 
     const validation = this.imageProcessor.validateFile(file, {
       maxSizeKB: 5000,
-      allowedFormats: ['image/jpeg', 'image/png', 'image/gif', 'image/bmp', 'image/webp']
+      allowedFormats: [
+        'image/jpeg',
+        'image/png',
+        'image/gif',
+        'image/bmp',
+        'image/webp',
+      ],
     });
 
     if (!validation.valid) {
@@ -69,7 +75,7 @@ export default class UtilitiesImageConverterController extends Controller {
         size: (file.size / 1024).toFixed(1) + ' KB',
         width: dims.width,
         height: dims.height,
-        format: file.type.split('/')[1].toUpperCase()
+        format: file.type.split('/')[1].toUpperCase(),
       };
     } catch (err) {
       this.error = 'Failed to read image';
@@ -88,14 +94,15 @@ export default class UtilitiesImageConverterController extends Controller {
         width: this.width,
         height: this.height,
         quality: this.quality / 100,
-        targetSizeKB: this.targetSizeKB
+        targetSizeKB: this.targetSizeKB,
       });
 
       this.convertedBlob = result.blob;
       this.convertedPreview = URL.createObjectURL(result.blob);
       this.convertedSize = (result.blob.size / 1024).toFixed(1) + ' KB';
-      
-      const originalName = this.selectedFile?.name?.replace(/\.[^/.]+$/, '') || 'image';
+
+      const originalName =
+        this.selectedFile?.name?.replace(/\.[^/.]+$/, '') || 'image';
       this.downloadFileName = `${originalName}_${this.width}x${this.height}.webp`;
     } catch (err) {
       this.error = err.message;
@@ -154,6 +161,7 @@ export default class UtilitiesImageConverterController extends Controller {
     this.showExactPreview = false;
     this.error = null;
     this.fileInfo = null;
+    document.getElementById('ic-file-input').value = '';
   }
 
   @action
@@ -173,6 +181,11 @@ export default class UtilitiesImageConverterController extends Controller {
       name = name + '.webp';
     }
     this.downloadFileName = name;
+  }
+
+  @action
+  stopPropagation(e) {
+    e.stopPropagation();
   }
 
   @action
